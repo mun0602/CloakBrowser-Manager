@@ -210,3 +210,30 @@ class AICommentReq(BaseModel):
     language: Literal["zh", "vi"] = "zh"
     style: str = "positive"
 
+
+class BatchProxyCheckReq(BaseModel):
+    proxies: list[str]
+
+
+class BatchProxyAssignReq(BaseModel):
+    proxies: list[str]
+    profile_ids: list[str]
+    geoip: bool = True
+
+
+class BatchProfileWithProxyReq(BaseModel):
+    proxies: list[str]
+    name_prefix: str = "Douyin Profile"
+    platform: Literal["windows", "macos", "linux"] = "windows"
+    geoip: bool = True
+
+
+class BatchAccountImportReq(BaseModel):
+    raw_text: str | None = None
+    accounts: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class CookieImportReq(BaseModel):
+    cookies: list[dict[str, Any]]
+
+

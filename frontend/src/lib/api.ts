@@ -215,7 +215,72 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+
+  // Batch Proxy APIs
+  checkProxiesBatch: (proxies: string[]) =>
+    request<ProxyCheckResult[]>("/api/proxy/check-batch", {
+      method: "POST",
+      body: JSON.stringify({ proxies }),
+    }),
+
+  batchAssignProxies: (data: { proxies: string[]; profile_ids: string[]; geoip?: boolean }) =>
+    request<{ success: boolean; updated_count: number }>("/api/profiles/batch-assign-proxy", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  batchCreateProfilesWithProxies: (data: {
+    proxies: string[];
+    name_prefix?: string;
+    platform?: string;
+    geoip?: boolean;
+  }) =>
+    request<{ success: boolean; created_count: number; items: any[] }>(
+      "/api/profiles/batch-create-with-proxies",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    ),
+
+  // Login Assistant & Cookie Vault APIs
+  startLoginAssistant: (accountId: string) =>
+    request<{ logged_in: boolean; nickname?: string; avatar_url?: string; status: string }>(
+      `/api/douyin/accounts/${accountId}/login-assistant`,
+      { method: "POST" }
+    ),
+
+  exportCookies: (accountId: string) =>
+    request<{ account_id: string; cookies: any[]; count: number }>(
+      `/api/douyin/accounts/${accountId}/cookies`
+    ),
+
+  importCookies: (accountId: string, cookies: any[]) =>
+    request<{ success: boolean; login_status: any }>(
+      `/api/douyin/accounts/${accountId}/cookies`,
+      {
+        method: "POST",
+        body: JSON.stringify({ cookies }),
+      }
+    ),
+
+  batchImportAccounts: (data: { raw_text?: string; accounts?: any[] }) =>
+    request<{ success: boolean; imported_count: number; accounts: DouyinAccount[] }>(
+      "/api/douyin/accounts/batch-import",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    ),
 };
+
+export interface ProxyCheckResult {
+  proxy: string;
+  valid: boolean;
+  ip: string | null;
+  latency_ms: number;
+  error: string | null;
+}
 
 export interface DouyinAccount {
   id: string;

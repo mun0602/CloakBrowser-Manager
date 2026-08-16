@@ -179,3 +179,68 @@ class DouyinClient:
         except Exception as e:
             logger.warning("[%s] Login check failed: %s", self.profile_name, e)
             return {"logged_in": False, "status": "unknown", "error": str(e)}
+
+    async def get_cookies(self) -> list[dict[str, Any]]:
+        """Export all session cookies from browser context."""
+        if not self.context:
+            return []
+        try:
+            return await self.context.cookies()
+        except Exception as e:
+            logger.warning("[%s] Failed to get cookies: %s", self.profile_name, e)
+            return []
+
+    async def set_cookies(self, cookies: list[dict[str, Any]]) -> bool:
+        """Import cookies into browser context."""
+        if not self.context:
+            return False
+        try:
+            await self.context.add_cookies(cookies)
+            return True
+        except Exception as e:
+            logger.warning("[%s] Failed to set cookies: %s", self.profile_name, e)
+            return False
+
+    async def open_login_assistant(self, timeout_sec: int = 120) -> dict[str, Any]:
+        """
+        Open Douyin login dialog on the live browser and monitor until user logs in or timeout.
+        """
+        if not self.page:
+            raise RuntimeError("Browser not connected")
+
+        logger.info("[%s] Opening Douyin Login Assistant...", self.profile_name)
+        await self.page.goto("https://www.douyin.com", wait_until="domcontentloaded", timeout=45000)
+        await asyncio.sleep(2)
+
+        # Click login button if not logged in
+        login_btn = await self.page.query_selector("button:has-text('登录'), .header-login-button, [data-e2e='login-button']")
+        if login_btn:
+            try:
+                await login_btn.click()
+            except Exception:
+                pass
+
+        # Poll every 2 seconds to check if login succeeds
+        deadline = asyncio.get_running_loop().time() + timeout_sec
+        while asyncio.get_running_loop().time() < deadline:
+            avatar_sel = ".avatar-component-avatar img, [data-e2e='user-avatar'] img, .header-author-avatar img"
+            avatar_el = await self.page.query_selector(avatar_sel)
+            if avatar_el:
+                avatar_url = await avatar_el.get_attribute("src")
+                name_sel = ".author-name, .user-name, [data-e2e='user-name']"
+                name_el = await self.page.query_selector(name_sel)
+                nickname = await name_el.inner_text() if name_el else None
+                cookies = await self.get_cookies()
+
+                logger.info("[%s] Login success detected! Nickname: %s", self.profile_name, nickname)
+                return {
+                    "logged_in": True,
+                    "nickname": nickname,
+                    "avatar_url": avatar_url,
+                    "cookies_count": len(cookies),
+                    "status": "valid",
+                }
+            await asyncio.sleep(2)
+
+        return {"logged_in": False, "status": "timeout", "error": "Login timeout"}
+

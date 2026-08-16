@@ -43,10 +43,16 @@ from .models import (
     WorkflowResponse,
     TaskDispatchReq,
     AICommentReq,
+    BatchProxyCheckReq,
+    BatchProxyAssignReq,
+    BatchProfileWithProxyReq,
+    BatchAccountImportReq,
+    CookieImportReq,
 )
 from .douyin.scheduler import DouyinTaskScheduler
 from .douyin.ai_generator import AIGenerator
 from .douyin.client import DouyinClient
+from .douyin.proxy_checker import check_proxy_latency, batch_check_proxies, parse_proxy_line
 
 logger = logging.getLogger("cloakbrowser.manager")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
@@ -1216,6 +1222,205 @@ async def douyin_tasks_websocket(websocket: WebSocket):
     except WebSocketDisconnect:
         if on_event in douyin_scheduler.listeners:
             douyin_scheduler.listeners.remove(on_event)
+
+
+# ---------------------------------------------------------------------------
+# Batch Proxy Management Endpoints
+# ---------------------------------------------------------------------------
+
+@app.post("/api/proxy/check-batch")
+async def check_proxies_batch(req: BatchProxyCheckReq):
+    """Test connection, external IP and latency for a list of proxy strings."""
+    return await batch_check_proxies(req.proxies)
+
+
+@app.post("/api/profiles/batch-assign-proxy")
+async def batch_assign_proxy(req: BatchProxyAssignReq):
+    """Assign proxies from list to selected profiles sequentially."""
+    if not req.profile_ids or not req.proxies:
+        raise HTTPException(status_code=400, detail="Missing profile_ids or proxies")
+
+    parsed_proxies = [p["url"] for p in (parse_proxy_line(line) for line in req.proxies) if p]
+    if not parsed_proxies:
+        raise HTTPException(status_code=400, detail="No valid proxies found in list")
+
+    updated_count = 0
+    for idx, pid in enumerate(req.profile_ids):
+        proxy_url = parsed_proxies[idx % len(parsed_proxies)]
+        db.update_profile(pid, proxy=proxy_url, geoip=req.geoip)
+        # Also update linked douyin account if present
+        for acc in db.list_douyin_accounts():
+            if acc["profile_id"] == pid:
+                db.update_douyin_account(acc["id"], proxy_url=proxy_url)
+        updated_count += 1
+
+    return {"success": True, "updated_count": updated_count}
+
+
+@app.post("/api/profiles/batch-create-with-proxies")
+async def batch_create_profiles_with_proxies(req: BatchProfileWithProxyReq):
+    """Auto create N new Antidetect profiles and bind with proxies."""
+    parsed_proxies = [p["url"] for p in (parse_proxy_line(line) for line in req.proxies) if p]
+    if not parsed_proxies:
+        raise HTTPException(status_code=400, detail="No valid proxies provided")
+
+    created_profiles = []
+    for idx, p_url in enumerate(parsed_proxies, 1):
+        name = f"{req.name_prefix} {idx:02d}"
+        profile = db.create_profile(
+            name=name,
+            platform=req.platform,
+            proxy=p_url,
+            geoip=req.geoip,
+        )
+        # Automatically register Douyin account linked to this profile
+        acc = db.create_douyin_account(
+            profile_id=profile["id"],
+            nickname=name,
+            proxy_url=p_url,
+            tags=["batch-proxy"],
+        )
+        created_profiles.append({"profile": profile, "account": acc})
+
+    return {"success": True, "created_count": len(created_profiles), "items": created_profiles}
+
+
+# ---------------------------------------------------------------------------
+# Douyin Account Login Assistant & Cookie Vault Endpoints
+# ---------------------------------------------------------------------------
+
+@app.post("/api/douyin/accounts/{account_id}/login-assistant")
+async def start_login_assistant(account_id: str):
+    """
+    Launch browser profile, navigate to Douyin, and open the login dialog.
+    Actively monitors for successful login and saves nickname & avatar.
+    """
+    acc = db.get_douyin_account(account_id)
+    if not acc:
+        raise HTTPException(status_code=404, detail="Douyin account not found")
+
+    profile_id = acc["profile_id"]
+    profile_record = db.get_profile(profile_id)
+    if not profile_record:
+        raise HTTPException(status_code=404, detail="Profile record missing")
+
+    running = browser_mgr.running.get(profile_id)
+    if not running:
+        running = await browser_mgr.launch(profile_record)
+
+    cdp_url = f"http://127.0.0.1:8080/api/profiles/{profile_id}/cdp"
+    client = DouyinClient(cdp_url=cdp_url, profile_name=acc.get("nickname") or "Account")
+    try:
+        await client.connect()
+        result = await client.open_login_assistant(timeout_sec=120)
+        if result.get("logged_in"):
+            db.update_douyin_account(
+                account_id,
+                nickname=result.get("nickname") or acc.get("nickname"),
+                avatar_url=result.get("avatar_url"),
+                cookie_status="valid",
+            )
+        return result
+    finally:
+        await client.close()
+
+
+@app.get("/api/douyin/accounts/{account_id}/cookies")
+async def export_douyin_cookies(account_id: str):
+    """Export browser cookies for a Douyin account."""
+    acc = db.get_douyin_account(account_id)
+    if not acc:
+        raise HTTPException(status_code=404, detail="Douyin account not found")
+
+    profile_id = acc["profile_id"]
+    profile_record = db.get_profile(profile_id)
+    if not profile_record:
+        raise HTTPException(status_code=404, detail="Profile record missing")
+
+    running = browser_mgr.running.get(profile_id)
+    if not running:
+        running = await browser_mgr.launch(profile_record)
+
+    cdp_url = f"http://127.0.0.1:8080/api/profiles/{profile_id}/cdp"
+    client = DouyinClient(cdp_url=cdp_url, profile_name=acc.get("nickname") or "Account")
+    try:
+        await client.connect()
+        cookies = await client.get_cookies()
+        return {"account_id": account_id, "cookies": cookies, "count": len(cookies)}
+    finally:
+        await client.close()
+
+
+@app.post("/api/douyin/accounts/{account_id}/cookies")
+async def import_douyin_cookies(account_id: str, req: CookieImportReq):
+    """Import session cookies into Douyin account browser profile."""
+    acc = db.get_douyin_account(account_id)
+    if not acc:
+        raise HTTPException(status_code=404, detail="Douyin account not found")
+
+    profile_id = acc["profile_id"]
+    profile_record = db.get_profile(profile_id)
+    if not profile_record:
+        raise HTTPException(status_code=404, detail="Profile record missing")
+
+    running = browser_mgr.running.get(profile_id)
+    if not running:
+        running = await browser_mgr.launch(profile_record)
+
+    cdp_url = f"http://127.0.0.1:8080/api/profiles/{profile_id}/cdp"
+    client = DouyinClient(cdp_url=cdp_url, profile_name=acc.get("nickname") or "Account")
+    try:
+        await client.connect()
+        success = await client.set_cookies(req.cookies)
+        login_res = await client.check_login_status()
+        if login_res.get("logged_in"):
+            db.update_douyin_account(
+                account_id,
+                nickname=login_res.get("nickname") or acc.get("nickname"),
+                avatar_url=login_res.get("avatar_url"),
+                cookie_status="valid",
+            )
+        return {"success": success, "login_status": login_res}
+    finally:
+        await client.close()
+
+
+@app.post("/api/douyin/accounts/batch-import")
+async def batch_import_accounts(req: BatchAccountImportReq):
+    """Batch import Douyin accounts from JSON or raw text."""
+    imported = []
+    if req.raw_text:
+        lines = [l.strip() for l in req.raw_text.splitlines() if l.strip()]
+        for idx, line in enumerate(lines, 1):
+            parts = line.split("|")
+            nick = parts[0].strip() if len(parts) > 0 else f"Imported Acc {idx}"
+            douyin_id = parts[1].strip() if len(parts) > 1 else None
+            proxy_url = parts[2].strip() if len(parts) > 2 else None
+            p = db.create_profile(name=nick, proxy=proxy_url, geoip=True if proxy_url else False)
+            acc = db.create_douyin_account(
+                profile_id=p["id"],
+                nickname=nick,
+                douyin_id=douyin_id,
+                proxy_url=proxy_url,
+                tags=["imported"],
+            )
+            imported.append(acc)
+
+    for a in req.accounts:
+        p_id = a.get("profile_id")
+        if not p_id:
+            p = db.create_profile(name=a.get("nickname") or "Imported Acc", proxy=a.get("proxy_url"))
+            p_id = p["id"]
+        acc = db.create_douyin_account(
+            profile_id=p_id,
+            nickname=a.get("nickname"),
+            douyin_id=a.get("douyin_id"),
+            proxy_url=a.get("proxy_url"),
+            tags=a.get("tags") or ["imported"],
+        )
+        imported.append(acc)
+
+    return {"success": True, "imported_count": len(imported), "accounts": imported}
 
 
 # ── Static Frontend ───────────────────────────────────────────────────────────

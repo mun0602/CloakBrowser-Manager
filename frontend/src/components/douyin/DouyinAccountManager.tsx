@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-import { RefreshCw, Plus, Trash2, Globe, Shield, Search, LayoutGrid, List } from "lucide-react";
+import { RefreshCw, Plus, Trash2, Globe, Shield, Search, LayoutGrid, List, QrCode, FileText, CheckCircle2, AlertCircle } from "lucide-react";
 import { api, type DouyinAccount, type Profile } from "../../lib/api";
+import { BatchProxyModal } from "./BatchProxyModal";
+import { AccountImportExportModal } from "./AccountImportExportModal";
 
 interface Props {
   profiles: Profile[];
@@ -11,7 +13,13 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
   const [accounts, setAccounts] = useState<DouyinAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkingId, setCheckingId] = useState<string | null>(null);
+  const [loggingInId, setLoggingInId] = useState<string | null>(null);
+
+  // Modals
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showBatchProxyModal, setShowBatchProxyModal] = useState(false);
+  const [showImportExportModal, setShowImportExportModal] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
@@ -43,13 +51,33 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
       alert(
         res.logged_in
           ? `✅ Đã đăng nhập thành công!\nTài khoản: ${res.nickname || "Douyin User"}`
-          : `⚠️ Tài khoản chưa đăng nhập / Chế độ khách. Hãy bấm "Mở Trình Duyệt" và quét mã QR Douyin.`
+          : `⚠️ Tài khoản chưa đăng nhập / Chế độ khách. Hãy bấm "Đăng Nhập QR" để mở giao diện quét mã.`
       );
       loadAccounts();
     } catch (err) {
       alert(`Lỗi kiểm tra: ${err}`);
     } finally {
       setCheckingId(null);
+    }
+  };
+
+  const handleStartLoginAssistant = async (acc: DouyinAccount) => {
+    try {
+      setLoggingInId(acc.id);
+      alert(
+        `📱 Trình duyệt đang mở trang Douyin...\nVui lòng quét mã QR trên màn hình điện thoại Douyin để đăng nhập!`
+      );
+      const res = await api.startLoginAssistant(acc.id);
+      if (res.logged_in) {
+        alert(`🎉 Đăng nhập thành công!\nChào mừng: ${res.nickname || "Douyin User"}`);
+      } else {
+        alert(`⚠️ Đăng nhập chưa hoàn tất hoặc đã hết thời gian chờ.`);
+      }
+      loadAccounts();
+    } catch (err) {
+      alert(`Lỗi hỗ trợ đăng nhập: ${err}`);
+    } finally {
+      setLoggingInId(null);
     }
   };
 
@@ -98,30 +126,30 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
   return (
     <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-6">
       {/* Top Header & Search Control Bar */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-surface-1/90 backdrop-blur-xl p-4 sm:p-6 rounded-2xl border border-white/[0.08] shadow-bezel-sm">
+      <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 bg-surface-1/90 backdrop-blur-xl p-4 sm:p-6 rounded-2xl border border-white/[0.08] shadow-bezel-sm">
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-base sm:text-lg font-extrabold text-white tracking-wide">
-              Quản Lý Tài Khoản Douyin Matrix
+              Quản Lý Tài Khoản Douyin & Proxy Hub
             </h2>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/15 text-rose-400 border border-rose-500/20">
-              {accounts.length} Profiles
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/15 text-rose-400 border border-rose-500/20">
+              {accounts.length} Accounts
             </span>
           </div>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Mỗi tài khoản vận hành trên môi trường Chromium Stealth độc lập, tách biệt cookie và vân tay
+            Quản lý phiên đăng nhập QR, Cookie Vault và cơ chế gán Proxy đa luồng cho từng Profile
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           {/* Search box */}
-          <div className="relative flex-1 sm:w-64">
+          <div className="relative flex-1 sm:w-56">
             <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm theo tên, profile, tag..."
+              placeholder="Tìm kiếm..."
               className="w-full h-9 bg-surface-2/80 border border-white/[0.08] rounded-xl pl-9 pr-3 text-xs text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-rose-500/50"
             />
           </div>
@@ -153,12 +181,26 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
             className="p-2.5 rounded-xl bg-surface-2 text-zinc-400 hover:text-zinc-200 border border-white/[0.08] hover:border-white/[0.15] transition"
             title="Làm mới"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-rose-400" : ""}`} />
+          </button>
+
+          <button
+            onClick={() => setShowBatchProxyModal(true)}
+            className="btn-tactile-dark py-2 px-3 text-xs flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300"
+          >
+            <Globe className="w-3.5 h-3.5" /> Cấu Hình Proxy Hàng Loạt
+          </button>
+
+          <button
+            onClick={() => setShowImportExportModal(true)}
+            className="btn-tactile-dark py-2 px-3 text-xs flex items-center gap-1.5 text-amber-400 hover:text-amber-300"
+          >
+            <FileText className="w-3.5 h-3.5" /> Nhập/Xuất & Cookie
           </button>
 
           <button
             onClick={() => setShowAddModal(true)}
-            className="btn-tactile-rose flex items-center gap-1.5 text-xs py-2"
+            className="btn-tactile-rose flex items-center gap-1.5 text-xs py-2 px-3.5"
           >
             <Plus className="w-3.5 h-3.5" /> Thêm Tài Khoản
           </button>
@@ -170,7 +212,7 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredAccounts.length === 0 ? (
             <div className="col-span-full bezel-card p-12 text-center text-zinc-400 text-xs font-mono">
-              Chưa tìm thấy tài khoản Douyin nào phù hợp.
+              Chưa có tài khoản Douyin nào. Hãy bấm "Thêm Tài Khoản" hoặc "Cấu Hình Proxy Hàng Loạt".
             </div>
           ) : (
             filteredAccounts.map((acc) => (
@@ -188,7 +230,7 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
                       </div>
                       <span
                         className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-surface-1 ${
-                          acc.cookie_status === "valid" ? "bg-emerald-500" : "bg-zinc-600"
+                          acc.cookie_status === "valid" ? "bg-emerald-500 shadow-glow-rose" : "bg-zinc-600"
                         }`}
                       ></span>
                     </div>
@@ -226,16 +268,20 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
                       <Globe className="w-3 h-3 text-rose-400" /> Proxy:
                     </span>
                     <span className="font-mono text-[11px] text-zinc-300">
-                      {acc.proxy_url ? acc.proxy_url.split("@").pop() : "Direct IP"}
+                      {acc.proxy_url ? acc.proxy_url.split("@").pop() : "Direct IP (Không Proxy)"}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between pt-1 border-t border-white/[0.04]">
                     <span className="text-zinc-400 text-[11px]">Trạng thái:</span>
                     {acc.cookie_status === "valid" ? (
-                      <span className="text-emerald-400 font-mono text-[11px] font-bold">✓ Đã đăng nhập</span>
+                      <span className="text-emerald-400 font-mono text-[11px] font-bold flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> Đã đăng nhập
+                      </span>
                     ) : (
-                      <span className="text-amber-400 font-mono text-[11px] font-bold">Chế độ khách</span>
+                      <span className="text-amber-400 font-mono text-[11px] font-bold flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> Chế độ khách
+                      </span>
                     )}
                   </div>
                 </div>
@@ -255,19 +301,30 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
                 )}
 
                 {/* Action Buttons */}
-                <div className="grid grid-cols-2 gap-2 pt-1">
+                <div className="space-y-2 pt-1">
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => handleCheckLogin(acc)}
+                      disabled={checkingId === acc.id}
+                      className="btn-tactile-dark py-2 text-[11px] text-zinc-300 hover:text-white"
+                    >
+                      {checkingId === acc.id ? "Đang check..." : "Check Status"}
+                    </button>
+                    <button
+                      onClick={() => onLaunchProfile(acc.profile_id)}
+                      className="btn-tactile-dark py-2 text-[11px] text-rose-400 hover:text-rose-300"
+                    >
+                      Mở Trình Duyệt
+                    </button>
+                  </div>
+
                   <button
-                    onClick={() => handleCheckLogin(acc)}
-                    disabled={checkingId === acc.id}
-                    className="btn-tactile-dark py-2 text-xs text-rose-400 hover:text-rose-300"
+                    onClick={() => handleStartLoginAssistant(acc)}
+                    disabled={loggingInId === acc.id}
+                    className="btn-tactile-rose w-full py-2 text-xs flex items-center justify-center gap-1.5"
                   >
-                    {checkingId === acc.id ? "Đang check..." : "Check Login"}
-                  </button>
-                  <button
-                    onClick={() => onLaunchProfile(acc.profile_id)}
-                    className="btn-tactile-rose py-2 text-xs"
-                  >
-                    Mở Browser
+                    <QrCode className={`w-3.5 h-3.5 ${loggingInId === acc.id ? "animate-spin" : ""}`} />
+                    {loggingInId === acc.id ? "Đang chờ quét mã..." : "Quét Mã Đăng Nhập Douyin"}
                   </button>
                 </div>
               </div>
@@ -321,11 +378,11 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
                     </td>
                     <td className="px-5 py-3.5 text-right space-x-2">
                       <button
-                        onClick={() => handleCheckLogin(acc)}
-                        disabled={checkingId === acc.id}
+                        onClick={() => handleStartLoginAssistant(acc)}
+                        disabled={loggingInId === acc.id}
                         className="px-2.5 py-1 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg border border-rose-500/30 transition"
                       >
-                        Check
+                        Đăng Nhập QR
                       </button>
                       <button
                         onClick={() => onLaunchProfile(acc.profile_id)}
@@ -348,7 +405,7 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
         </div>
       )}
 
-      {/* Modal Add Account with Double Bezel */}
+      {/* Modal Add Single Account with Double Bezel */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
           <div className="bezel-card p-6 w-full max-w-md space-y-5 shadow-2xl">
@@ -419,6 +476,24 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Batch Proxy Modal */}
+      {showBatchProxyModal && (
+        <BatchProxyModal
+          profiles={profiles}
+          onClose={() => setShowBatchProxyModal(false)}
+          onSuccess={loadAccounts}
+        />
+      )}
+
+      {/* Account Import / Export Modal */}
+      {showImportExportModal && (
+        <AccountImportExportModal
+          accounts={accounts}
+          onClose={() => setShowImportExportModal(false)}
+          onSuccess={loadAccounts}
+        />
       )}
     </div>
   );
