@@ -47,6 +47,14 @@ export function DouyinScheduleManager({ profiles, onTasksDispatched }: Props) {
   const [enableAI, setEnableAI] = useState(true);
   const [searchKeyword, setSearchKeyword] = useState("穿搭");
 
+  // Livestream & Uploader states
+  const [liveUrl, setLiveUrl] = useState("");
+  const [liveDurationMin, setLiveDurationMin] = useState(3);
+  const [heartClicks, setHeartClicks] = useState(25);
+  const [videoPath, setVideoPath] = useState("");
+  const [videoTitle, setVideoTitle] = useState("");
+  const [videoTags, setVideoTags] = useState("日常, 推荐");
+
   const loadSchedules = async () => {
     try {
       setLoading(true);
@@ -129,6 +137,23 @@ export function DouyinScheduleManager({ profiles, onTasksDispatched }: Props) {
         max_interact_delay_sec: maxInteractDelaySec,
         like_probability: likeProb / 100,
         enable_comment: enableAI,
+      };
+    } else if (actionType === "live_interact") {
+      config = {
+        live_url: liveUrl || "https://live.douyin.com",
+        duration_min: liveDurationMin,
+        heart_clicks: heartClicks,
+      };
+    } else if (actionType === "uploader") {
+      if (!videoPath.trim()) {
+        alert("Vui lòng nhập đường dẫn file video .mp4 để lên lịch đăng!");
+        return;
+      }
+      config = {
+        video_path: videoPath.trim(),
+        title: videoTitle.trim() || "Douyin Auto Video",
+        tags: videoTags.split(",").map((t) => t.trim()).filter(Boolean),
+        publish_now: true,
       };
     }
 
@@ -557,6 +582,85 @@ export function DouyinScheduleManager({ profiles, onTasksDispatched }: Props) {
                     placeholder="Ví dụ: 穿搭 / 美妆"
                     className="input text-xs"
                   />
+                </div>
+              )}
+
+              {/* Livestream Controls */}
+              {actionType === "live_interact" && (
+                <div className="space-y-2">
+                  <div className="bezel-card-inner p-3 space-y-1">
+                    <span className="text-[11px] text-zinc-400 font-semibold block">Link phòng Livestream:</span>
+                    <input
+                      type="text"
+                      value={liveUrl}
+                      onChange={(e) => setLiveUrl(e.target.value)}
+                      placeholder="https://live.douyin.com/..."
+                      className="input text-xs font-mono"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bezel-card-inner p-3 space-y-1">
+                      <span className="text-[11px] text-zinc-400 font-semibold block">Thời gian xem (Phút):</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={60}
+                        value={liveDurationMin}
+                        onChange={(e) => setLiveDurationMin(Number(e.target.value))}
+                        className="input text-xs font-mono"
+                      />
+                    </div>
+                    <div className="bezel-card-inner p-3 space-y-1">
+                      <span className="text-[11px] text-zinc-400 font-semibold block">Lượt thả tim:</span>
+                      <input
+                        type="number"
+                        min={5}
+                        max={200}
+                        value={heartClicks}
+                        onChange={(e) => setHeartClicks(Number(e.target.value))}
+                        className="input text-xs font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Uploader Controls */}
+              {actionType === "uploader" && (
+                <div className="space-y-2">
+                  <div className="bezel-card-inner p-3 space-y-1">
+                    <span className="text-[11px] text-zinc-400 font-semibold block">Đường dẫn file video (.mp4):</span>
+                    <input
+                      type="text"
+                      required
+                      value={videoPath}
+                      onChange={(e) => setVideoPath(e.target.value)}
+                      placeholder="/Users/macmoon/Movies/video.mp4"
+                      className="input text-xs font-mono"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bezel-card-inner p-3 space-y-1">
+                      <span className="text-[11px] text-zinc-400 font-semibold block">Tiêu đề video:</span>
+                      <input
+                        type="text"
+                        value={videoTitle}
+                        onChange={(e) => setVideoTitle(e.target.value)}
+                        placeholder="Tiêu đề video Douyin"
+                        className="input text-xs"
+                      />
+                    </div>
+                    <div className="bezel-card-inner p-3 space-y-1">
+                      <span className="text-[11px] text-zinc-400 font-semibold block">Hashtags (phẩy):</span>
+                      <input
+                        type="text"
+                        value={videoTags}
+                        onChange={(e) => setVideoTags(e.target.value)}
+                        placeholder="日常, 推荐"
+                        className="input text-xs"
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
 

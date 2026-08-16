@@ -19,7 +19,8 @@ logger = logging.getLogger("cloakbrowser.douyin.scheduler")
 
 def compute_next_run(schedule_type: str, schedule_value: str, from_dt: datetime.datetime | None = None) -> datetime.datetime | None:
     """Calculate the next execution timestamp based on schedule type and value."""
-    now = from_dt or datetime.datetime.now(datetime.timezone.utc)
+    now_utc = from_dt or datetime.datetime.now(datetime.timezone.utc)
+    local_now = now_utc.astimezone()
 
     if schedule_type == "daily_time":
         # schedule_value: "HH:MM" (e.g. "08:30" or multiple comma-separated "08:30,12:00,20:00")
@@ -29,45 +30,47 @@ def compute_next_run(schedule_type: str, schedule_value: str, from_dt: datetime.
             try:
                 parts = t_str.split(":")
                 hour, minute = int(parts[0]), int(parts[1])
-                # Check for today
-                cand = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-                if cand <= now:
+                # Check for today in local timezone
+                cand_local = local_now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+                if cand_local <= local_now:
                     # Move to tomorrow
-                    cand += datetime.timedelta(days=1)
-                candidates.append(cand)
+                    cand_local += datetime.timedelta(days=1)
+                # Convert back to UTC for consistent storage & comparison
+                candidates.append(cand_local.astimezone(datetime.timezone.utc))
             except Exception:
                 pass
         if candidates:
             return min(candidates)
-        return now + datetime.timedelta(days=1)
+        return now_utc + datetime.timedelta(days=1)
 
     elif schedule_type == "interval_hours":
         # schedule_value: integer or float hours (e.g. "2" or "4")
         try:
-            hours = float(schedule_value)
-            return now + datetime.timedelta(hours=hours)
+            hours = max(0.1, float(schedule_value))
+            return now_utc + datetime.timedelta(hours=hours)
         except Exception:
-            return now + datetime.timedelta(hours=2)
+            return now_utc + datetime.timedelta(hours=2)
 
     elif schedule_type == "interval_minutes":
         # schedule_value: integer minutes (e.g. "30" or "60")
         try:
-            mins = float(schedule_value)
-            return now + datetime.timedelta(minutes=mins)
+            mins = max(1.0, float(schedule_value))
+            return now_utc + datetime.timedelta(minutes=mins)
         except Exception:
-            return now + datetime.timedelta(minutes=30)
+            return now_utc + datetime.timedelta(minutes=30)
 
     elif schedule_type == "once_at":
         # schedule_value: ISO string (e.g. "2026-08-17T09:00:00")
         try:
             dt = datetime.datetime.fromisoformat(schedule_value)
             if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=datetime.timezone.utc)
-            return dt if dt > now else None
+                dt = dt.astimezone()  # Assume local timezone if naive
+            dt_utc = dt.astimezone(datetime.timezone.utc)
+            return dt_utc if dt_utc > now_utc else None
         except Exception:
             return None
 
-    return now + datetime.timedelta(hours=1)
+    return now_utc + datetime.timedelta(hours=1)
 
 
 class DouyinTaskScheduler:
@@ -194,8 +197,12 @@ class DouyinTaskScheduler:
 
                 # Record database action log
                 try:
+                    from ..database import list_douyin_accounts
+                    accounts = list_douyin_accounts()
+                    matched = next((a for a in accounts if a.get("profile_id") == profile_id), None)
+                    resolved_account_id = matched["id"] if matched else profile_id
                     record_action_log(
-                        account_id=profile_id,
+                        account_id=resolved_account_id,
                         action_type=action_type,
                         content=json.dumps(res, ensure_ascii=False),
                         status="success",

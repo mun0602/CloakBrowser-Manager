@@ -8,4 +8,9 @@ export default defineConfig({
       "/api": "http://localhost:8080",
     },
   },
+  build: {
+    rollupOptions: {
+      maxParallelFileOps: 30,
+    },
+  },
 });

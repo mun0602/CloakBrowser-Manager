@@ -28,7 +28,7 @@ export function ProfileViewer({ profileId, cdpUrl, clipboardSync: initialClipboa
     async function connect() {
       try {
         // Import noVNC dynamically
-        const { default: RFB } = await import("@novnc/novnc/core/rfb.js");
+        const { default: RFB } = await import("@novnc/novnc/core/rfb");
 
         if (cancelled) return;
 
