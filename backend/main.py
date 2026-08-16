@@ -201,7 +201,10 @@ douyin_scheduler = DouyinTaskScheduler(browser_mgr, max_concurrent=3)
 ai_generator = AIGenerator()
 
 # Frontend build directory (React production build)
-FRONTEND_DIR = Path(__file__).parent.parent / "frontend" / "dist"
+if getattr(sys, "frozen", False):
+    FRONTEND_DIR = Path(getattr(sys, "_MEIPASS", ".")) / "frontend" / "dist"
+else:
+    FRONTEND_DIR = Path(__file__).parent.parent / "frontend" / "dist"
 
 
 # ---------------------------------------------------------------------------

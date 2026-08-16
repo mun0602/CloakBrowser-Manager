@@ -1,0 +1,87 @@
+name: Build Windows x64 Executable & Release
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - "v*"
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-exe:
+    name: Build Windows x64 Standalone Executable
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12 (x64)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: "x64"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # Step 1: Build React Frontend
+      - name: Build Frontend Distribution
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      # Step 2: Install Python Dependencies & PyInstaller
+      - name: Install Python Dependencies & PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r backend/requirements.txt
+          python -m pip install pyinstaller playwright
+
+      # Step 3: Package into Standalone Executable (.exe)
+      - name: Build Standalone Executable with PyInstaller
+        run: |
+          python -m PyInstaller --clean --noconfirm CloakBrowser-Manager.spec
+
+      # Step 4: Archive Distribution
+      - name: Prepare Release Archive
+        shell: bash
+        run: |
+          mkdir -p release-dist
+          cp dist/CloakBrowser-Manager-x64.exe release-dist/
+          cp README.md release-dist/
+          cd release-dist && 7z a -tzip ../CloakBrowser-Manager-Windows-x64.zip *
+
+      # Step 5: Upload Build Artifacts
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CloakBrowser-Manager-Windows-x64
+          path: dist/CloakBrowser-Manager-x64.exe
+          retention-days: 14
+
+      # Step 6: Create GitHub Release (when pushing tag v*)
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/CloakBrowser-Manager-x64.exe
+            CloakBrowser-Manager-Windows-x64.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
