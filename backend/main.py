@@ -1154,10 +1154,19 @@ async def delete_douyin_workflow(workflow_id: str):
 @app.post("/api/douyin/tasks/dispatch")
 async def dispatch_douyin_tasks(req: TaskDispatchReq):
     """Dispatch an automation workflow to multiple profiles concurrently in task queue."""
-    dispatched_task_ids = []
+    if not req.profile_ids:
+        raise HTTPException(status_code=400, detail="No profile IDs provided")
+
+    # Validate all profile IDs exist before queueing
+    resolved_profiles = []
     for pid in req.profile_ids:
         p = db.get_profile(pid)
-        p_name = p.get("name", pid) if p else pid
+        if not p:
+            raise HTTPException(status_code=404, detail=f"Profile '{pid}' not found")
+        resolved_profiles.append((pid, p.get("name", pid)))
+
+    dispatched_task_ids = []
+    for pid, p_name in resolved_profiles:
         t_id = await douyin_scheduler.submit_task(
             profile_id=pid,
             profile_name=p_name,
@@ -1204,9 +1213,14 @@ async def generate_ai_comment(req: AICommentReq):
     return {"comment": cmt}
 
 
+@app.websocket("/api/douyin/tasks/ws")
 @app.websocket("/ws/douyin/tasks")
 async def douyin_tasks_websocket(websocket: WebSocket):
     """WebSocket stream for real-time task progress and activity logs."""
+    if AUTH_TOKEN and not _validate_auth(websocket.scope):
+        await websocket.close(code=4401, reason="Unauthorized")
+        return
+
     await websocket.accept()
 
     async def on_event(event_data: dict[str, Any]):
