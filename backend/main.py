@@ -10,6 +10,7 @@ import asyncio
 import hmac
 import logging
 import os
+import sys
 import struct
 import shutil
 from contextlib import asynccontextmanager
@@ -1090,6 +1091,7 @@ async def get_douyin_account(account_id: str):
 
 
 @app.patch("/api/douyin/accounts/{account_id}", response_model=DouyinAccountResponse)
+@app.put("/api/douyin/accounts/{account_id}", response_model=DouyinAccountResponse)
 async def update_douyin_account(account_id: str, data: DouyinAccountUpdate):
     acc = db.update_douyin_account(account_id, **data.model_dump(exclude_unset=True))
     if not acc:
