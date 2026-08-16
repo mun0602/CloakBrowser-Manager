@@ -237,3 +237,37 @@ class CookieImportReq(BaseModel):
     cookies: list[dict[str, Any]]
 
 
+class ScheduleCreateReq(BaseModel):
+    name: str
+    action_type: Literal["warmup", "search_interact", "live_interact", "uploader"] = "warmup"
+    profile_ids: list[str]
+    config: dict[str, Any] = Field(default_factory=dict)
+    schedule_type: Literal["daily_time", "interval_hours", "interval_minutes", "once_at"] = "daily_time"
+    schedule_value: str = "08:30"
+
+
+class ScheduleUpdateReq(BaseModel):
+    name: str | None = None
+    action_type: Literal["warmup", "search_interact", "live_interact", "uploader"] | None = None
+    profile_ids: list[str] | None = None
+    config: dict[str, Any] | None = None
+    schedule_type: Literal["daily_time", "interval_hours", "interval_minutes", "once_at"] | None = None
+    schedule_value: str | None = None
+    is_active: bool | None = None
+
+
+class ScheduleResponse(BaseModel):
+    id: str
+    name: str
+    action_type: str
+    profile_ids: list[str]
+    config: dict[str, Any]
+    schedule_type: str
+    schedule_value: str
+    is_active: bool
+    last_run_at: str | None = None
+    next_run_at: str | None = None
+    created_at: str
+
+
+

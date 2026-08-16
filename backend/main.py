@@ -48,8 +48,11 @@ from .models import (
     BatchProfileWithProxyReq,
     BatchAccountImportReq,
     CookieImportReq,
+    ScheduleCreateReq,
+    ScheduleUpdateReq,
+    ScheduleResponse,
 )
-from .douyin.scheduler import DouyinTaskScheduler
+from .douyin.scheduler import DouyinTaskScheduler, compute_next_run
 from .douyin.ai_generator import AIGenerator
 from .douyin.client import DouyinClient
 from .douyin.proxy_checker import check_proxy_latency, batch_check_proxies, parse_proxy_line
@@ -397,6 +400,7 @@ def _filter_rfb_client_messages(data: bytes) -> bytes:
 async def lifespan(app: FastAPI):
     browser_mgr.vnc.validate_available()
     db.init_db()
+    douyin_scheduler.start()
     await browser_mgr.cleanup_stale()
     browser_mgr._auto_launch_task = asyncio.create_task(browser_mgr.auto_launch_all())
     logger.info("CloakBrowser Manager started")
@@ -1236,6 +1240,98 @@ async def douyin_tasks_websocket(websocket: WebSocket):
     except WebSocketDisconnect:
         if on_event in douyin_scheduler.listeners:
             douyin_scheduler.listeners.remove(on_event)
+
+
+# ---------------------------------------------------------------------------
+# Automated Scheduling Endpoints (Cron / Auto-Timer Management)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/douyin/schedules", response_model=list[ScheduleResponse])
+async def list_douyin_schedules(only_active: bool = False):
+    """List all configured automated schedules."""
+    return db.list_schedules(only_active=only_active)
+
+
+@app.post("/api/douyin/schedules", response_model=ScheduleResponse)
+async def create_douyin_schedule(req: ScheduleCreateReq):
+    """Create a new automated recurring schedule."""
+    if not req.profile_ids:
+        raise HTTPException(status_code=400, detail="No profile IDs provided for schedule")
+
+    # Validate profile IDs exist
+    for pid in req.profile_ids:
+        if not db.get_profile(pid):
+            raise HTTPException(status_code=404, detail=f"Profile '{pid}' not found")
+
+    next_dt = compute_next_run(req.schedule_type, req.schedule_value)
+    sch = db.create_schedule(
+        name=req.name,
+        action_type=req.action_type,
+        profile_ids=req.profile_ids,
+        config=req.config,
+        schedule_type=req.schedule_type,
+        schedule_value=req.schedule_value,
+        next_run_at=next_dt.isoformat() if next_dt else None,
+    )
+    return sch
+
+
+@app.get("/api/douyin/schedules/{schedule_id}", response_model=ScheduleResponse)
+async def get_douyin_schedule(schedule_id: str):
+    sch = db.get_schedule(schedule_id)
+    if not sch:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    return sch
+
+
+@app.put("/api/douyin/schedules/{schedule_id}", response_model=ScheduleResponse)
+async def update_douyin_schedule(schedule_id: str, req: ScheduleUpdateReq):
+    sch = db.get_schedule(schedule_id)
+    if not sch:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+
+    fields = req.model_dump(exclude_unset=True)
+    if "profile_ids" in fields and fields["profile_ids"]:
+        for pid in fields["profile_ids"]:
+            if not db.get_profile(pid):
+                raise HTTPException(status_code=404, detail=f"Profile '{pid}' not found")
+
+    if "schedule_type" in fields or "schedule_value" in fields:
+        st = fields.get("schedule_type", sch["schedule_type"])
+        sv = fields.get("schedule_value", sch["schedule_value"])
+        next_dt = compute_next_run(st, sv)
+        fields["next_run_at"] = next_dt.isoformat() if next_dt else None
+
+    updated = db.update_schedule(schedule_id, **fields)
+    return updated
+
+
+@app.delete("/api/douyin/schedules/{schedule_id}")
+async def delete_douyin_schedule(schedule_id: str):
+    ok = db.delete_schedule(schedule_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    return {"success": True}
+
+
+@app.post("/api/douyin/schedules/{schedule_id}/toggle", response_model=ScheduleResponse)
+async def toggle_douyin_schedule(schedule_id: str):
+    updated = db.toggle_schedule(schedule_id)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    return updated
+
+
+@app.post("/api/douyin/schedules/{schedule_id}/trigger")
+async def trigger_douyin_schedule_now(schedule_id: str):
+    """Manually trigger immediate execution of a schedule."""
+    try:
+        task_ids = await douyin_scheduler.trigger_schedule(schedule_id)
+        return {"success": True, "dispatched_count": len(task_ids), "task_ids": task_ids}
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ---------------------------------------------------------------------------

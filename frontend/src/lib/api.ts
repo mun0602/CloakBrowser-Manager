@@ -272,6 +272,41 @@ export const api = {
         body: JSON.stringify(data),
       }
     ),
+
+  // Automated Scheduling (Cron / Timer) APIs
+  listDouyinSchedules: (onlyActive?: boolean) =>
+    request<DouyinSchedule[]>(`/api/douyin/schedules${onlyActive ? "?only_active=true" : ""}`),
+
+  createDouyinSchedule: (data: {
+    name: string;
+    action_type: string;
+    profile_ids: string[];
+    config: Record<string, any>;
+    schedule_type: "daily_time" | "interval_hours" | "interval_minutes" | "once_at";
+    schedule_value: string;
+  }) =>
+    request<DouyinSchedule>("/api/douyin/schedules", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  updateDouyinSchedule: (id: string, data: Partial<DouyinSchedule>) =>
+    request<DouyinSchedule>(`/api/douyin/schedules/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  deleteDouyinSchedule: (id: string) =>
+    request<{ success: boolean }>(`/api/douyin/schedules/${id}`, { method: "DELETE" }),
+
+  toggleDouyinSchedule: (id: string) =>
+    request<DouyinSchedule>(`/api/douyin/schedules/${id}/toggle`, { method: "POST" }),
+
+  triggerDouyinSchedule: (id: string) =>
+    request<{ success: boolean; dispatched_count: number; task_ids: string[] }>(
+      `/api/douyin/schedules/${id}/trigger`,
+      { method: "POST" }
+    ),
 };
 
 export interface ProxyCheckResult {
@@ -280,6 +315,20 @@ export interface ProxyCheckResult {
   ip: string | null;
   latency_ms: number;
   error: string | null;
+}
+
+export interface DouyinSchedule {
+  id: string;
+  name: string;
+  action_type: "warmup" | "search_interact" | "live_interact" | "uploader";
+  profile_ids: string[];
+  config: Record<string, any>;
+  schedule_type: "daily_time" | "interval_hours" | "interval_minutes" | "once_at";
+  schedule_value: string;
+  is_active: boolean;
+  last_run_at?: string | null;
+  next_run_at?: string | null;
+  created_at: string;
 }
 
 export interface DouyinAccount {

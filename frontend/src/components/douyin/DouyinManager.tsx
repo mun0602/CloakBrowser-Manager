@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { UserCheck, Flame, ListFilter, Sparkles, Activity } from "lucide-react";
+import { UserCheck, Flame, ListFilter, Sparkles, Activity, Clock } from "lucide-react";
 import { type Profile } from "../../lib/api";
 import { DouyinAccountManager } from "./DouyinAccountManager";
 import { DouyinWorkflowStudio } from "./DouyinWorkflowStudio";
 import { DouyinTaskQueue } from "./DouyinTaskQueue";
 import { DouyinAICommenter } from "./DouyinAICommenter";
+import { DouyinScheduleManager } from "./DouyinScheduleManager";
 
 interface Props {
   profiles: Profile[];
@@ -12,13 +13,14 @@ interface Props {
 }
 
 export function DouyinManager({ profiles, onLaunchProfile }: Props) {
-  const [activeNav, setActiveNav] = useState<"accounts" | "workflows" | "queue" | "ai">("workflows");
+  const [activeNav, setActiveNav] = useState<"accounts" | "workflows" | "schedules" | "queue" | "ai">("workflows");
 
   const navItems = [
     { id: "workflows", label: "Kịch Bản Auto", icon: Flame, badge: "Matrix" },
+    { id: "schedules", label: "Lịch Trình Hẹn Giờ", icon: Clock, badge: "Cron 24/7" },
     { id: "accounts", label: "Tài Khoản Douyin", icon: UserCheck, badge: profiles.length.toString() },
     { id: "queue", label: "Hàng Đợi & Log", icon: ListFilter, badge: "Live" },
-    { id: "ai", label: "AI Commenter", icon: Sparkles, badge: "GPT/Gemini" },
+    { id: "ai", label: "AI Commenter", icon: Sparkles, badge: "Gemini" },
   ] as const;
 
   return (
@@ -78,6 +80,12 @@ export function DouyinManager({ profiles, onLaunchProfile }: Props) {
       <div className="flex-1 overflow-y-auto overscroll-contain bg-gradient-to-b from-[#07090e] via-[#0b1018] to-[#07090e]">
         {activeNav === "workflows" && (
           <DouyinWorkflowStudio
+            profiles={profiles}
+            onTasksDispatched={() => setActiveNav("queue")}
+          />
+        )}
+        {activeNav === "schedules" && (
+          <DouyinScheduleManager
             profiles={profiles}
             onTasksDispatched={() => setActiveNav("queue")}
           />

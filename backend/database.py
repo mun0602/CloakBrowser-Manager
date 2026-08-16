@@ -101,6 +101,20 @@ def init_db():
                 status TEXT DEFAULT 'success',
                 created_at TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS douyin_schedules (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                action_type TEXT NOT NULL,
+                profile_ids TEXT NOT NULL,
+                config_json TEXT NOT NULL,
+                schedule_type TEXT NOT NULL,
+                schedule_value TEXT NOT NULL,
+                is_active BOOLEAN DEFAULT 1,
+                last_run_at TEXT,
+                next_run_at TEXT,
+                created_at TEXT NOT NULL
+            );
         """)
         conn.commit()
 
@@ -418,4 +432,132 @@ def list_action_logs(limit: int = 50) -> list[dict[str, Any]]:
             (limit,),
         ).fetchall()
         return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Douyin Automated Scheduling Database Helpers
+# ---------------------------------------------------------------------------
+
+def create_schedule(
+    name: str,
+    action_type: str,
+    profile_ids: list[str],
+    config: dict[str, Any],
+    schedule_type: str,
+    schedule_value: str,
+    next_run_at: str | None = None,
+) -> dict[str, Any]:
+    sch_id = str(uuid.uuid4())
+    now = _now()
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO douyin_schedules
+            (id, name, action_type, profile_ids, config_json, schedule_type, schedule_value, is_active, last_run_at, next_run_at, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 1, NULL, ?, ?)
+            """,
+            (
+                sch_id,
+                name,
+                action_type,
+                json.dumps(profile_ids),
+                json.dumps(config),
+                schedule_type,
+                schedule_value,
+                next_run_at,
+                now,
+            ),
+        )
+        conn.commit()
+    return get_schedule(sch_id)  # type: ignore
+
+
+def list_schedules(only_active: bool = False) -> list[dict[str, Any]]:
+    with get_db() as conn:
+        query = "SELECT * FROM douyin_schedules"
+        if only_active:
+            query += " WHERE is_active = 1"
+        query += " ORDER BY created_at DESC"
+        rows = conn.execute(query).fetchall()
+        result = []
+        for r in rows:
+            d = dict(r)
+            try:
+                d["profile_ids"] = json.loads(d["profile_ids"])
+            except Exception:
+                d["profile_ids"] = []
+            try:
+                d["config"] = json.loads(d["config_json"])
+            except Exception:
+                d["config"] = {}
+            d["is_active"] = bool(d["is_active"])
+            result.append(d)
+        return result
+
+
+def get_schedule(sch_id: str) -> dict[str, Any] | None:
+    with get_db() as conn:
+        row = conn.execute("SELECT * FROM douyin_schedules WHERE id = ?", (sch_id,)).fetchone()
+        if not row:
+            return None
+        d = dict(row)
+        try:
+            d["profile_ids"] = json.loads(d["profile_ids"])
+        except Exception:
+            d["profile_ids"] = []
+        try:
+            d["config"] = json.loads(d["config_json"])
+        except Exception:
+            d["config"] = {}
+        d["is_active"] = bool(d["is_active"])
+        return d
+
+
+def update_schedule(sch_id: str, **fields: Any) -> dict[str, Any] | None:
+    allowed = {
+        "name", "action_type", "profile_ids", "config",
+        "schedule_type", "schedule_value", "is_active",
+        "last_run_at", "next_run_at"
+    }
+    updates = []
+    values = []
+    for k, v in fields.items():
+        if k in allowed:
+            if k == "profile_ids" and isinstance(v, list):
+                updates.append(f"{k} = ?")
+                values.append(json.dumps(v))
+            elif k == "config" and isinstance(v, dict):
+                updates.append("config_json = ?")
+                values.append(json.dumps(v))
+            elif k == "is_active":
+                updates.append(f"{k} = ?")
+                values.append(1 if v else 0)
+            else:
+                updates.append(f"{k} = ?")
+                values.append(v)
+
+    if not updates:
+        return get_schedule(sch_id)
+
+    values.append(sch_id)
+    with get_db() as conn:
+        conn.execute(f"UPDATE douyin_schedules SET {', '.join(updates)} WHERE id = ?", tuple(values))
+        conn.commit()
+    return get_schedule(sch_id)
+
+
+def delete_schedule(sch_id: str) -> bool:
+    with get_db() as conn:
+        cursor = conn.execute("DELETE FROM douyin_schedules WHERE id = ?", (sch_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+
+
+def toggle_schedule(sch_id: str) -> dict[str, Any] | None:
+    sch = get_schedule(sch_id)
+    if not sch:
+        return None
+    new_state = not sch["is_active"]
+    return update_schedule(sch_id, is_active=new_state)
+
 
