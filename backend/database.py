@@ -67,6 +67,39 @@ def init_db():
                 color TEXT,
                 PRIMARY KEY (profile_id, tag)
             );
+
+            CREATE TABLE IF NOT EXISTS douyin_accounts (
+                id TEXT PRIMARY KEY,
+                profile_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                nickname TEXT,
+                douyin_id TEXT,
+                avatar_url TEXT,
+                follower_count INTEGER DEFAULT 0,
+                following_count INTEGER DEFAULT 0,
+                cookie_status TEXT DEFAULT 'unknown',
+                proxy_url TEXT,
+                tags TEXT DEFAULT '[]',
+                last_active_at TEXT,
+                created_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS workflows (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                action_type TEXT NOT NULL,
+                config_json TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS action_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                account_id TEXT NOT NULL,
+                action_type TEXT NOT NULL,
+                target_id TEXT,
+                content TEXT,
+                status TEXT DEFAULT 'success',
+                created_at TEXT NOT NULL
+            );
         """)
         conn.commit()
 
@@ -225,3 +258,163 @@ def delete_profile(profile_id: str) -> bool:
         cursor = conn.execute("DELETE FROM profiles WHERE id = ?", (profile_id,))
         conn.commit()
         return cursor.rowcount > 0
+
+
+# ---------------------------------------------------------------------------
+# Douyin Accounts & Workflows Operations
+# ---------------------------------------------------------------------------
+
+def create_douyin_account(
+    profile_id: str,
+    nickname: str | None = None,
+    douyin_id: str | None = None,
+    avatar_url: str | None = None,
+    proxy_url: str | None = None,
+    tags: list[str] | None = None,
+) -> dict[str, Any]:
+    account_id = str(uuid.uuid4())
+    now = _now()
+    tags_json = json.dumps(tags or [])
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO douyin_accounts (
+                id, profile_id, nickname, douyin_id, avatar_url,
+                proxy_url, tags, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (account_id, profile_id, nickname, douyin_id, avatar_url, proxy_url, tags_json, now),
+        )
+        conn.commit()
+    return get_douyin_account(account_id) or {}
+
+
+def list_douyin_accounts() -> list[dict[str, Any]]:
+    with get_db() as conn:
+        rows = conn.execute(
+            """
+            SELECT da.*, p.name as profile_name
+            FROM douyin_accounts da
+            LEFT JOIN profiles p ON da.profile_id = p.id
+            ORDER BY da.created_at DESC
+            """
+        ).fetchall()
+        accounts = []
+        for r in rows:
+            acc = dict(r)
+            acc["tags"] = json.loads(acc.get("tags") or "[]")
+            accounts.append(acc)
+        return accounts
+
+
+def get_douyin_account(account_id: str) -> dict[str, Any] | None:
+    with get_db() as conn:
+        row = conn.execute(
+            """
+            SELECT da.*, p.name as profile_name
+            FROM douyin_accounts da
+            LEFT JOIN profiles p ON da.profile_id = p.id
+            WHERE da.id = ?
+            """,
+            (account_id,),
+        ).fetchone()
+        if not row:
+            return None
+        acc = dict(row)
+        acc["tags"] = json.loads(acc.get("tags") or "[]")
+        return acc
+
+
+def update_douyin_account(account_id: str, **fields: Any) -> dict[str, Any] | None:
+    if "tags" in fields and isinstance(fields["tags"], list):
+        fields["tags"] = json.dumps(fields["tags"])
+
+    cols = []
+    vals = []
+    for col in (
+        "nickname", "douyin_id", "avatar_url", "follower_count",
+        "following_count", "cookie_status", "proxy_url", "tags", "last_active_at"
+    ):
+        if col in fields:
+            cols.append(f"{col} = ?")
+            vals.append(fields[col])
+
+    if cols:
+        vals.append(account_id)
+        with get_db() as conn:
+            conn.execute(f"UPDATE douyin_accounts SET {', '.join(cols)} WHERE id = ?", vals)
+            conn.commit()
+    return get_douyin_account(account_id)
+
+
+def delete_douyin_account(account_id: str) -> bool:
+    with get_db() as conn:
+        cursor = conn.execute("DELETE FROM douyin_accounts WHERE id = ?", (account_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+
+
+def create_workflow(name: str, action_type: str, config: dict[str, Any]) -> dict[str, Any]:
+    wf_id = str(uuid.uuid4())
+    now = _now()
+    config_json = json.dumps(config)
+    with get_db() as conn:
+        conn.execute(
+            "INSERT INTO workflows (id, name, action_type, config_json, created_at) VALUES (?, ?, ?, ?, ?)",
+            (wf_id, name, action_type, config_json, now),
+        )
+        conn.commit()
+    return {"id": wf_id, "name": name, "action_type": action_type, "config": config, "created_at": now}
+
+
+def list_workflows() -> list[dict[str, Any]]:
+    with get_db() as conn:
+        rows = conn.execute("SELECT * FROM workflows ORDER BY created_at DESC").fetchall()
+        wfs = []
+        for r in rows:
+            wf = dict(r)
+            wf["config"] = json.loads(wf.get("config_json") or "{}")
+            wfs.append(wf)
+        return wfs
+
+
+def delete_workflow(wf_id: str) -> bool:
+    with get_db() as conn:
+        cursor = conn.execute("DELETE FROM workflows WHERE id = ?", (wf_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+
+
+def record_action_log(
+    account_id: str,
+    action_type: str,
+    target_id: str | None = None,
+    content: str | None = None,
+    status: str = "success",
+) -> None:
+    now = _now()
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO action_logs (account_id, action_type, target_id, content, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (account_id, action_type, target_id, content, status, now),
+        )
+        conn.commit()
+
+
+def list_action_logs(limit: int = 50) -> list[dict[str, Any]]:
+    with get_db() as conn:
+        rows = conn.execute(
+            """
+            SELECT al.*, da.nickname as account_name
+            FROM action_logs al
+            LEFT JOIN douyin_accounts da ON al.account_id = da.id
+            ORDER BY al.created_at DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+

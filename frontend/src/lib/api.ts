@@ -166,4 +166,95 @@ export const api = {
 
   getClipboard: (id: string) =>
     request<{ text: string }>(`/api/profiles/${id}/clipboard`),
+
+  // Douyin API methods
+  listDouyinAccounts: () => request<DouyinAccount[]>("/api/douyin/accounts"),
+
+  createDouyinAccount: (data: { profile_id: string; nickname?: string; douyin_id?: string; proxy_url?: string; tags?: string[] }) =>
+    request<DouyinAccount>("/api/douyin/accounts", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  updateDouyinAccount: (id: string, data: Partial<DouyinAccount>) =>
+    request<DouyinAccount>(`/api/douyin/accounts/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+
+  deleteDouyinAccount: (id: string) =>
+    request<{ success: boolean }>(`/api/douyin/accounts/${id}`, { method: "DELETE" }),
+
+  checkDouyinLogin: (id: string) =>
+    request<{ logged_in: boolean; nickname?: string; avatar_url?: string; status: string }>(
+      `/api/douyin/accounts/${id}/check-login`,
+      { method: "POST" }
+    ),
+
+  listDouyinWorkflows: () => request<DouyinWorkflow[]>("/api/douyin/workflows"),
+
+  createDouyinWorkflow: (data: { name: string; action_type: string; config: Record<string, any> }) =>
+    request<DouyinWorkflow>("/api/douyin/workflows", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  deleteDouyinWorkflow: (id: string) =>
+    request<{ success: boolean }>(`/api/douyin/workflows/${id}`, { method: "DELETE" }),
+
+  dispatchDouyinTasks: (data: { profile_ids: string[]; action_type: string; config: Record<string, any> }) =>
+    request<{ success: boolean; dispatched_count: number; task_ids: string[] }>("/api/douyin/tasks/dispatch", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  listDouyinTasks: () => request<DouyinTask[]>("/api/douyin/tasks"),
+
+  generateAIComment: (data: { video_title: string; language?: string; style?: string }) =>
+    request<{ comment: string }>("/api/douyin/ai/comment", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
+
+export interface DouyinAccount {
+  id: string;
+  profile_id: string;
+  profile_name?: string;
+  profile_status?: "running" | "stopped";
+  nickname?: string;
+  douyin_id?: string;
+  avatar_url?: string;
+  follower_count: number;
+  following_count: number;
+  cookie_status: string;
+  proxy_url?: string;
+  tags: string[];
+  last_active_at?: string;
+  created_at: string;
+}
+
+export interface DouyinWorkflow {
+  id: string;
+  name: string;
+  action_type: "warmup" | "search_interact" | "live_interact" | "uploader";
+  config: Record<string, any>;
+  created_at: string;
+}
+
+export interface DouyinTask {
+  id: string;
+  profile_id: string;
+  profile_name: string;
+  action_type: string;
+  config: Record<string, any>;
+  status: "pending" | "running" | "completed" | "failed";
+  progress_current: number;
+  progress_total: number;
+  logs: { time: string; message: string; level: string }[];
+  started_at?: string;
+  finished_at?: string;
+  result?: any;
+  error?: string;
+}
+

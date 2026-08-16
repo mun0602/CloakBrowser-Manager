@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -143,3 +143,70 @@ class ClipboardRequest(BaseModel):
 
 class LoginRequest(BaseModel):
     token: str
+
+
+# ---------------------------------------------------------------------------
+# Douyin Matrix Automation Models
+# ---------------------------------------------------------------------------
+
+class DouyinAccountCreate(BaseModel):
+    profile_id: str
+    nickname: str | None = None
+    douyin_id: str | None = None
+    proxy_url: str | None = None
+    tags: list[str] = Field(default_factory=list)
+
+
+class DouyinAccountUpdate(BaseModel):
+    nickname: str | None = None
+    douyin_id: str | None = None
+    avatar_url: str | None = None
+    follower_count: int | None = None
+    following_count: int | None = None
+    cookie_status: str | None = None
+    proxy_url: str | None = None
+    tags: list[str] | None = None
+
+
+class DouyinAccountResponse(BaseModel):
+    id: str
+    profile_id: str
+    profile_name: str | None = None
+    profile_status: str | None = None
+    nickname: str | None = None
+    douyin_id: str | None = None
+    avatar_url: str | None = None
+    follower_count: int = 0
+    following_count: int = 0
+    cookie_status: str = "unknown"
+    proxy_url: str | None = None
+    tags: list[str] = []
+    last_active_at: str | None = None
+    created_at: str
+
+
+class WorkflowCreate(BaseModel):
+    name: str
+    action_type: Literal["warmup", "search_interact", "live_interact", "uploader"] = "warmup"
+    config: dict[str, Any] = Field(default_factory=dict)
+
+
+class WorkflowResponse(BaseModel):
+    id: str
+    name: str
+    action_type: str
+    config: dict[str, Any]
+    created_at: str
+
+
+class TaskDispatchReq(BaseModel):
+    profile_ids: list[str]
+    action_type: Literal["warmup", "search_interact", "live_interact", "uploader"] = "warmup"
+    config: dict[str, Any] = Field(default_factory=dict)
+
+
+class AICommentReq(BaseModel):
+    video_title: str
+    language: Literal["zh", "vi"] = "zh"
+    style: str = "positive"
+

@@ -36,7 +36,17 @@ from .models import (
     ProfileUpdate,
     StatusResponse,
     TagResponse,
+    DouyinAccountCreate,
+    DouyinAccountUpdate,
+    DouyinAccountResponse,
+    WorkflowCreate,
+    WorkflowResponse,
+    TaskDispatchReq,
+    AICommentReq,
 )
+from .douyin.scheduler import DouyinTaskScheduler
+from .douyin.ai_generator import AIGenerator
+from .douyin.client import DouyinClient
 
 logger = logging.getLogger("cloakbrowser.manager")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
@@ -176,8 +186,10 @@ class AuthMiddleware:
             await response(scope, receive, send)
 
 
-# Singleton browser manager
+# Singleton browser manager and Douyin scheduler
 browser_mgr = BrowserManager()
+douyin_scheduler = DouyinTaskScheduler(browser_mgr, max_concurrent=3)
+ai_generator = AIGenerator()
 
 # Frontend build directory (React production build)
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend" / "dist"
@@ -1028,6 +1040,182 @@ async def cdp_page_proxy(websocket: WebSocket, profile_id: str, path: str):
 
     target_url = f"ws://127.0.0.1:{running.cdp_port}/devtools/{path}"
     await _proxy_cdp_websocket(websocket, target_url, f"CDP page proxy [{profile_id}]")
+
+
+# ---------------------------------------------------------------------------
+# Douyin Matrix Automation API Endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/api/douyin/accounts", response_model=list[DouyinAccountResponse])
+async def list_douyin_accounts():
+    """List all registered Douyin accounts with their profile and proxy status."""
+    return db.list_douyin_accounts()
+
+
+@app.post("/api/douyin/accounts", response_model=DouyinAccountResponse, status_code=201)
+async def create_douyin_account(data: DouyinAccountCreate):
+    """Register a Douyin account linked to an existing or new Antidetect profile."""
+    p = db.get_profile(data.profile_id)
+    if not p:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    acc = db.create_douyin_account(
+        profile_id=data.profile_id,
+        nickname=data.nickname,
+        douyin_id=data.douyin_id,
+        proxy_url=data.proxy_url or p.get("proxy"),
+        tags=data.tags,
+    )
+    return acc
+
+
+@app.get("/api/douyin/accounts/{account_id}", response_model=DouyinAccountResponse)
+async def get_douyin_account(account_id: str):
+    acc = db.get_douyin_account(account_id)
+    if not acc:
+        raise HTTPException(status_code=404, detail="Douyin account not found")
+    return acc
+
+
+@app.patch("/api/douyin/accounts/{account_id}", response_model=DouyinAccountResponse)
+async def update_douyin_account(account_id: str, data: DouyinAccountUpdate):
+    acc = db.update_douyin_account(account_id, **data.model_dump(exclude_unset=True))
+    if not acc:
+        raise HTTPException(status_code=404, detail="Douyin account not found")
+    return acc
+
+
+@app.delete("/api/douyin/accounts/{account_id}")
+async def delete_douyin_account(account_id: str):
+    if not db.delete_douyin_account(account_id):
+        raise HTTPException(status_code=404, detail="Douyin account not found")
+    return {"success": True}
+
+
+@app.post("/api/douyin/accounts/{account_id}/check-login")
+async def check_douyin_account_login(account_id: str):
+    """Launch profile if needed and check login session status via CDP."""
+    acc = db.get_douyin_account(account_id)
+    if not acc:
+        raise HTTPException(status_code=404, detail="Douyin account not found")
+
+    profile_id = acc["profile_id"]
+    profile_record = db.get_profile(profile_id)
+    if not profile_record:
+        raise HTTPException(status_code=404, detail="Profile record missing")
+
+    running = browser_mgr.running.get(profile_id)
+    if not running:
+        running = await browser_mgr.launch(profile_record)
+
+    cdp_url = f"http://127.0.0.1:8080/api/profiles/{profile_id}/cdp"
+    client = DouyinClient(cdp_url=cdp_url, profile_name=acc.get("nickname") or "Account")
+    try:
+        await client.connect()
+        result = await client.check_login_status()
+        if result.get("logged_in"):
+            db.update_douyin_account(
+                account_id,
+                nickname=result.get("nickname") or acc.get("nickname"),
+                avatar_url=result.get("avatar_url"),
+                cookie_status="valid",
+            )
+        else:
+            db.update_douyin_account(account_id, cookie_status="guest")
+        return result
+    finally:
+        await client.close()
+
+
+@app.get("/api/douyin/workflows", response_model=list[WorkflowResponse])
+async def list_douyin_workflows():
+    """List saved automation workflows."""
+    return db.list_workflows()
+
+
+@app.post("/api/douyin/workflows", response_model=WorkflowResponse, status_code=201)
+async def create_douyin_workflow(data: WorkflowCreate):
+    """Save a new automation workflow template."""
+    return db.create_workflow(name=data.name, action_type=data.action_type, config=data.config)
+
+
+@app.delete("/api/douyin/workflows/{workflow_id}")
+async def delete_douyin_workflow(workflow_id: str):
+    if not db.delete_workflow(workflow_id):
+        raise HTTPException(status_code=404, detail="Workflow not found")
+    return {"success": True}
+
+
+@app.post("/api/douyin/tasks/dispatch")
+async def dispatch_douyin_tasks(req: TaskDispatchReq):
+    """Dispatch an automation workflow to multiple profiles concurrently in task queue."""
+    dispatched_task_ids = []
+    for pid in req.profile_ids:
+        p = db.get_profile(pid)
+        p_name = p.get("name", pid) if p else pid
+        t_id = await douyin_scheduler.submit_task(
+            profile_id=pid,
+            profile_name=p_name,
+            action_type=req.action_type,
+            config=req.config,
+        )
+        dispatched_task_ids.append(t_id)
+
+    return {
+        "success": True,
+        "dispatched_count": len(dispatched_task_ids),
+        "task_ids": dispatched_task_ids,
+    }
+
+
+@app.get("/api/douyin/tasks")
+async def list_douyin_tasks():
+    """Get active and completed tasks from scheduler queue."""
+    return douyin_scheduler.get_tasks()
+
+
+@app.get("/api/douyin/tasks/{task_id}")
+async def get_douyin_task(task_id: str):
+    t = douyin_scheduler.get_task(task_id)
+    if not t:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return t
+
+
+@app.get("/api/douyin/logs")
+async def list_douyin_logs(limit: int = 50):
+    """Get recent action logs."""
+    return db.list_action_logs(limit=limit)
+
+
+@app.post("/api/douyin/ai/comment")
+async def generate_ai_comment(req: AICommentReq):
+    """Generate contextual comment for a Douyin video title."""
+    cmt = await ai_generator.generate_comment(
+        video_title=req.video_title,
+        language=req.language,
+        style=req.style,
+    )
+    return {"comment": cmt}
+
+
+@app.websocket("/ws/douyin/tasks")
+async def douyin_tasks_websocket(websocket: WebSocket):
+    """WebSocket stream for real-time task progress and activity logs."""
+    await websocket.accept()
+
+    async def on_event(event_data: dict[str, Any]):
+        try:
+            await websocket.send_json(event_data)
+        except Exception:
+            pass
+
+    douyin_scheduler.register_listener(on_event)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        if on_event in douyin_scheduler.listeners:
+            douyin_scheduler.listeners.remove(on_event)
 
 
 # ── Static Frontend ───────────────────────────────────────────────────────────
