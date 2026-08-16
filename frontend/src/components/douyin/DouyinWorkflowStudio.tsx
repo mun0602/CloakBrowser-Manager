@@ -14,9 +14,11 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
   // Form states
   // Warmup
   const [videoCount, setVideoCount] = useState(10);
-  const [minWatchSec, setMinWatchSec] = useState(5);
-  const [maxWatchSec, setMaxWatchSec] = useState(12);
-  const [likeProb, setLikeProb] = useState(25);
+  const [minWatchSec, setMinWatchSec] = useState(6);
+  const [maxWatchSec, setMaxWatchSec] = useState(14);
+  const [minInteractDelaySec, setMinInteractDelaySec] = useState(2);
+  const [maxInteractDelaySec, setMaxInteractDelaySec] = useState(6);
+  const [likeProb, setLikeProb] = useState(30);
   const [commentProb, setCommentProb] = useState(15);
   const [enableAI, setEnableAI] = useState(true);
 
@@ -63,6 +65,8 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
         video_count: videoCount,
         min_watch_sec: minWatchSec,
         max_watch_sec: maxWatchSec,
+        min_interact_delay_sec: minInteractDelaySec,
+        max_interact_delay_sec: maxInteractDelaySec,
         like_probability: likeProb / 100,
         comment_probability: commentProb / 100,
         enable_ai_comment: enableAI,
@@ -74,6 +78,8 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
         video_count: searchVideoCount,
         min_watch_sec: minWatchSec,
         max_watch_sec: maxWatchSec,
+        min_interact_delay_sec: minInteractDelaySec,
+        max_interact_delay_sec: maxInteractDelaySec,
         like_probability: likeProb / 100,
         enable_comment: enableAI,
       };
@@ -201,26 +207,32 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
 
                   <div className="bezel-card-inner p-4 space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="label mb-0">Thời gian xem/video</label>
+                      <label className="label mb-0">Thời gian xem video (s - s)</label>
                       <span className="text-xs font-mono font-bold text-cyan-400 px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">
                         {minWatchSec}s – {maxWatchSec}s
                       </span>
                     </div>
                     <div className="grid grid-cols-2 gap-2 pt-1">
-                      <input
-                        type="number"
-                        value={minWatchSec}
-                        onChange={(e) => setMinWatchSec(Number(e.target.value))}
-                        className="input text-center font-mono"
-                        placeholder="Min (s)"
-                      />
-                      <input
-                        type="number"
-                        value={maxWatchSec}
-                        onChange={(e) => setMaxWatchSec(Number(e.target.value))}
-                        className="input text-center font-mono"
-                        placeholder="Max (s)"
-                      />
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={minWatchSec}
+                          onChange={(e) => setMinWatchSec(Math.max(1, Number(e.target.value)))}
+                          className="input text-center font-mono pr-6"
+                          placeholder="Min"
+                        />
+                        <span className="absolute right-2.5 top-2.5 text-[10px] text-zinc-500 font-mono select-none">s</span>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={maxWatchSec}
+                          onChange={(e) => setMaxWatchSec(Math.max(minWatchSec, Number(e.target.value)))}
+                          className="input text-center font-mono pr-6"
+                          placeholder="Max"
+                        />
+                        <span className="absolute right-2.5 top-2.5 text-[10px] text-zinc-500 font-mono select-none">s</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -228,32 +240,62 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="bezel-card-inner p-4 space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="label mb-0">Tỷ lệ Thả Tim (Like)</label>
-                      <span className="text-xs font-mono font-bold text-sky-400">{likeProb}%</span>
+                      <label className="label mb-0">Thời gian dừng tương tác (s - s)</label>
+                      <span className="text-xs font-mono font-bold text-sky-400 px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/20">
+                        {minInteractDelaySec}s – {maxInteractDelaySec}s
+                      </span>
                     </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      value={likeProb}
-                      onChange={(e) => setLikeProb(Number(e.target.value))}
-                      className="w-full accent-sky-500 cursor-pointer"
-                    />
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={minInteractDelaySec}
+                          onChange={(e) => setMinInteractDelaySec(Math.max(1, Number(e.target.value)))}
+                          className="input text-center font-mono pr-6"
+                          placeholder="Min"
+                        />
+                        <span className="absolute right-2.5 top-2.5 text-[10px] text-zinc-500 font-mono select-none">s</span>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={maxInteractDelaySec}
+                          onChange={(e) => setMaxInteractDelaySec(Math.max(minInteractDelaySec, Number(e.target.value)))}
+                          className="input text-center font-mono pr-6"
+                          placeholder="Max"
+                        />
+                        <span className="absolute right-2.5 top-2.5 text-[10px] text-zinc-500 font-mono select-none">s</span>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="bezel-card-inner p-4 space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="label mb-0">Tỷ lệ Bình Luận</label>
-                      <span className="text-xs font-mono font-bold text-cyan-400">{commentProb}%</span>
+                      <label className="label mb-0">Tỷ lệ Thả Tim & Bình Luận</label>
+                      <span className="text-xs font-mono font-bold text-cyan-400">
+                        ❤️ {likeProb}% / 💬 {commentProb}%
+                      </span>
                     </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      value={commentProb}
-                      onChange={(e) => setCommentProb(Number(e.target.value))}
-                      className="w-full accent-cyan-500 cursor-pointer"
-                    />
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={likeProb}
+                        onChange={(e) => setLikeProb(Number(e.target.value))}
+                        className="w-full accent-sky-500 cursor-pointer"
+                        title="Tỷ lệ like"
+                      />
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={commentProb}
+                        onChange={(e) => setCommentProb(Number(e.target.value))}
+                        className="w-full accent-cyan-500 cursor-pointer"
+                        title="Tỷ lệ comment"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -301,25 +343,84 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
                     className="input font-medium text-sm"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="bezel-card-inner p-4 space-y-2">
-                    <label className="label">Số clip top tương tác:</label>
+                    <div className="flex items-center justify-between">
+                      <label className="label mb-0">Thời gian xem (s - s)</label>
+                      <span className="text-xs font-mono font-bold text-sky-400">
+                        {minWatchSec}s – {maxWatchSec}s
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <input
+                        type="number"
+                        value={minWatchSec}
+                        onChange={(e) => setMinWatchSec(Math.max(1, Number(e.target.value)))}
+                        className="input text-center font-mono"
+                        placeholder="Min (s)"
+                      />
+                      <input
+                        type="number"
+                        value={maxWatchSec}
+                        onChange={(e) => setMaxWatchSec(Math.max(minWatchSec, Number(e.target.value)))}
+                        className="input text-center font-mono"
+                        placeholder="Max (s)"
+                      />
+                    </div>
+                  </div>
+                  <div className="bezel-card-inner p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="label mb-0">Thời gian tương tác (s - s)</label>
+                      <span className="text-xs font-mono font-bold text-cyan-400">
+                        {minInteractDelaySec}s – {maxInteractDelaySec}s
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <input
+                        type="number"
+                        value={minInteractDelaySec}
+                        onChange={(e) => setMinInteractDelaySec(Math.max(1, Number(e.target.value)))}
+                        className="input text-center font-mono"
+                        placeholder="Min (s)"
+                      />
+                      <input
+                        type="number"
+                        value={maxInteractDelaySec}
+                        onChange={(e) => setMaxInteractDelaySec(Math.max(minInteractDelaySec, Number(e.target.value)))}
+                        className="input text-center font-mono"
+                        placeholder="Max (s)"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bezel-card-inner p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="label mb-0">Số video top kết quả</label>
+                      <span className="text-xs font-mono font-bold text-sky-400">{searchVideoCount} clips</span>
+                    </div>
                     <input
-                      type="number"
+                      type="range"
+                      min={1}
+                      max={20}
                       value={searchVideoCount}
                       onChange={(e) => setSearchVideoCount(Number(e.target.value))}
-                      className="input font-mono"
+                      className="w-full accent-sky-500 cursor-pointer"
                     />
                   </div>
                   <div className="bezel-card-inner p-4 space-y-2">
-                    <label className="label">Tỷ lệ like: {likeProb}%</label>
+                    <div className="flex items-center justify-between">
+                      <label className="label mb-0">Tỷ lệ like</label>
+                      <span className="text-xs font-mono font-bold text-cyan-400">{likeProb}%</span>
+                    </div>
                     <input
                       type="range"
                       min={0}
                       max={100}
                       value={likeProb}
                       onChange={(e) => setLikeProb(Number(e.target.value))}
-                      className="w-full accent-sky-500 cursor-pointer mt-2"
+                      className="w-full accent-cyan-500 cursor-pointer"
                     />
                   </div>
                 </div>

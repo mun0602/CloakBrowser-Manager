@@ -26,6 +26,8 @@ async def run_search_interact(
       - video_count: int (default 5)
       - min_watch_sec: int (default 6)
       - max_watch_sec: int (default 15)
+      - min_interact_delay_sec: int (default 2)
+      - max_interact_delay_sec: int (default 6)
       - like_probability: float (default 0.5)
       - enable_comment: bool (default True)
       - comment_text: str | None (if custom, otherwise AI generated)
@@ -34,6 +36,8 @@ async def run_search_interact(
     video_count = int(config.get("video_count", 5))
     min_watch = int(config.get("min_watch_sec", 6))
     max_watch = int(config.get("max_watch_sec", 15))
+    min_delay = int(config.get("min_interact_delay_sec", 2))
+    max_delay = int(config.get("max_interact_delay_sec", 6))
     like_prob = float(config.get("like_probability", 0.5))
     enable_cmt = bool(config.get("enable_comment", True))
     custom_cmt = config.get("comment_text")
@@ -45,7 +49,7 @@ async def run_search_interact(
         if log_callback:
             await log_callback(msg, level)
 
-    await log(f"🔍 Tìm kiếm từ khóa: '{keyword}' trên Douyin...")
+    await log(f"🔍 Tìm kiếm từ khóa: '{keyword}' trên Douyin (xem {min_watch}s-{max_watch}s, nghỉ {min_delay}s-{max_delay}s)...")
 
     await client.connect()
     page = client.page
@@ -81,28 +85,32 @@ async def run_search_interact(
                 await asyncio.sleep(watch_time)
                 interacted += 1
 
+                # Interaction delay
+                await asyncio.sleep(random.uniform(min_delay, max_delay))
+
                 if random.random() < like_prob:
                     if await client.like_current_video():
                         likes += 1
                         await log(f"❤️ Đã thả tim video #{i+1}")
+                        await asyncio.sleep(random.uniform(1.0, 2.0))
 
                 if enable_cmt:
                     cmt_text = custom_cmt or await ai_gen.generate_comment(video_title=keyword, language="zh")
                     if await client.post_comment(cmt_text):
                         comments += 1
                         await log(f"💬 Đã bình luận: '{cmt_text}'")
+                        await asyncio.sleep(random.uniform(1.5, 2.5))
 
                 # Close video modal or go back
                 await page.keyboard.press("Escape")
-                await asyncio.sleep(1.5)
+                await asyncio.sleep(random.uniform(min_delay, max_delay))
         except Exception as e:
             logger.warning("Error interacting with video %d: %s", i+1, e)
 
-    await log(f"✅ Hoàn tất tìm kiếm từ khóa '{keyword}'. Đã tương tác: {interacted} video, Like: {likes}, Cmt: {comments}")
+    await log(f"🎉 Hoàn thành tìm kiếm tương tác! Đã xử lý {interacted} video, Thả tim: {likes}, Bình luận: {comments}")
     return {
-        "keyword": keyword,
+        "success": True,
         "interacted_count": interacted,
-        "likes_count": likes,
-        "comments_count": comments,
-        "status": "success",
+        "likes": likes,
+        "comments": comments,
     }

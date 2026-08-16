@@ -24,6 +24,8 @@ async def run_warmup(
       - video_count: int (default 10)
       - min_watch_sec: int (default 5)
       - max_watch_sec: int (default 12)
+      - min_interact_delay_sec: int (default 2)
+      - max_interact_delay_sec: int (default 5)
       - like_probability: float (0.0 - 1.0, default 0.20)
       - favorite_probability: float (0.0 - 1.0, default 0.05)
       - comment_probability: float (0.0 - 1.0, default 0.10)
@@ -33,6 +35,8 @@ async def run_warmup(
     video_count = int(config.get("video_count", 10))
     min_watch = int(config.get("min_watch_sec", 5))
     max_watch = int(config.get("max_watch_sec", 12))
+    min_delay = int(config.get("min_interact_delay_sec", 2))
+    max_delay = int(config.get("max_interact_delay_sec", 5))
     like_prob = float(config.get("like_probability", 0.20))
     fav_prob = float(config.get("favorite_probability", 0.05))
     cmt_prob = float(config.get("comment_probability", 0.10))
@@ -46,7 +50,7 @@ async def run_warmup(
         if log_callback:
             await log_callback(msg, level)
 
-    await log(f"🚀 Bắt đầu kịch bản Nuôi Tài Khoản ({video_count} video)...")
+    await log(f"🚀 Bắt đầu kịch bản Nuôi Tài Khoản ({video_count} video, xem {min_watch}s-{max_watch}s, nghỉ {min_delay}s-{max_delay}s)...")
 
     # Connect to browser
     await client.connect()
@@ -72,12 +76,17 @@ async def run_warmup(
         await asyncio.sleep(watch_time)
         watched += 1
 
+        # Dwell interaction delay before interacting
+        interact_delay = random.uniform(min_delay, max_delay)
+        await asyncio.sleep(interact_delay)
+
         # Like action
         if random.random() < like_prob:
             liked = await client.like_current_video()
             if liked:
                 likes += 1
                 await log(f"❤️ Đã thả tim cho video {i}!")
+                await asyncio.sleep(random.uniform(1.0, 2.5))
 
         # Favorite action
         if random.random() < fav_prob:
@@ -85,6 +94,7 @@ async def run_warmup(
             if faved:
                 favorites += 1
                 await log(f"⭐ Đã lưu video {i} vào mục yêu thích!")
+                await asyncio.sleep(random.uniform(1.0, 2.0))
 
         # Comment action
         if enable_ai and random.random() < cmt_prob:
@@ -93,16 +103,18 @@ async def run_warmup(
             if posted:
                 comments += 1
                 await log(f"💬 Đã bình luận: '{cmt_text}'")
+                await asyncio.sleep(random.uniform(1.5, 3.0))
 
-        # Scroll to next video
+        # Humanized pause before scrolling to next video
+        scroll_delay = random.uniform(min_delay, max_delay)
+        await asyncio.sleep(scroll_delay)
         await client.next_video()
 
     await log(f"🎉 Hoàn thành nuôi acc! Đã xem {watched} video, Thả tim: {likes}, Lưu: {favorites}, Bình luận: {comments}")
-
     return {
-        "videos_watched": watched,
-        "likes_count": likes,
-        "favorites_count": favorites,
-        "comments_count": comments,
-        "status": "success",
+        "success": True,
+        "watched_count": watched,
+        "likes": likes,
+        "favorites": favorites,
+        "comments": comments,
     }
