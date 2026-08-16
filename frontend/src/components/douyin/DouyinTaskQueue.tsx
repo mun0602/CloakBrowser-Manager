@@ -43,7 +43,7 @@ export function DouyinTaskQueue() {
       {/* Top HUD Stat Counters */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bezel-card p-4 flex items-center gap-3.5">
-          <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+          <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20">
             <Zap className="w-5 h-5" />
           </div>
           <div>
@@ -53,12 +53,12 @@ export function DouyinTaskQueue() {
         </div>
 
         <div className="bezel-card p-4 flex items-center gap-3.5">
-          <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+          <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
             <PlayCircle className="w-5 h-5 animate-spin" />
           </div>
           <div>
             <div className="text-[11px] font-mono text-zinc-400 uppercase">Đang Thực Thi</div>
-            <div className="text-xl font-extrabold font-mono text-blue-400">{runningCount}</div>
+            <div className="text-xl font-extrabold font-mono text-cyan-400">{runningCount}</div>
           </div>
         </div>
 
@@ -90,7 +90,7 @@ export function DouyinTaskQueue() {
           <div className="bezel-card p-5 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
               <div className="flex items-center gap-2">
-                <ListFilter className="w-4 h-4 text-rose-400" />
+                <ListFilter className="w-4 h-4 text-sky-400" />
                 <h3 className="text-xs font-extrabold text-white tracking-wider uppercase font-mono">
                   Hàng Đợi ({tasks.length})
                 </h3>
@@ -118,13 +118,13 @@ export function DouyinTaskQueue() {
                       onClick={() => setSelectedTaskId(task.id)}
                       className={`p-3.5 rounded-xl border text-xs cursor-pointer transition-all duration-200 ${
                         isSelected
-                          ? "bg-rose-950/30 border-rose-500/50 shadow-glow-rose text-white"
+                          ? "bg-sky-950/30 border-sky-500/50 shadow-glow-sky text-white"
                           : "bg-surface-2/60 border-white/[0.05] text-zinc-400 hover:border-white/[0.12] hover:text-zinc-200"
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="font-extrabold text-white text-xs flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                          <span className="w-2 h-2 rounded-full bg-sky-500"></span>
                           {task.action_type === "warmup" && "Nuôi Nick Feed"}
                           {task.action_type === "search_interact" && "Tìm Kiếm Từ Khóa"}
                           {task.action_type === "live_interact" && "Seeding Live"}
@@ -133,8 +133,8 @@ export function DouyinTaskQueue() {
 
                         <div>
                           {task.status === "running" && (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30 flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping"></span> RUNNING
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span> RUNNING
                             </span>
                           )}
                           {task.status === "completed" && (
@@ -172,7 +172,7 @@ export function DouyinTaskQueue() {
                               ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"
                               : task.status === "failed"
                               ? "bg-red-400"
-                              : "bg-gradient-to-r from-rose-500 to-pink-500 shadow-glow-rose"
+                              : "bg-gradient-to-r from-sky-500 to-cyan-400 shadow-glow-sky"
                           }`}
                           style={{
                             width: `${
@@ -198,8 +198,8 @@ export function DouyinTaskQueue() {
           <div className="bezel-card p-5 flex flex-col h-full space-y-3">
             <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-rose-500/30 flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></div>
+                <div className="w-3 h-3 rounded-full bg-sky-500/30 flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse"></div>
                 </div>
                 <h3 className="text-xs font-extrabold text-white tracking-wider uppercase font-mono">
                   LIVE ACTION CONSOLE & CDP LOGS
@@ -207,7 +207,7 @@ export function DouyinTaskQueue() {
               </div>
               {selectedTask && (
                 <div className="text-[11px] font-mono text-zinc-400">
-                  TASK ID: <span className="text-rose-400 font-bold">{selectedTask.id.slice(0, 8)}</span>
+                  TASK ID: <span className="text-sky-400 font-bold">{selectedTask.id.slice(0, 8)}</span>
                 </div>
               )}
             </div>
@@ -215,7 +215,7 @@ export function DouyinTaskQueue() {
             {/* Terminal Window with Syntax Highlighting */}
             <div
               ref={logContainerRef}
-              className="bg-[#050608] rounded-xl p-4.5 font-mono text-[12px] text-zinc-300 h-[480px] overflow-y-auto space-y-2 border border-white/[0.04] shadow-inner"
+              className="bg-[#05080e] rounded-xl p-4.5 font-mono text-[12px] text-zinc-300 h-[480px] overflow-y-auto space-y-2 border border-white/[0.04] shadow-inner"
             >
               {!selectedTask || selectedTask.logs.length === 0 ? (
                 <div className="text-zinc-400 text-center py-28">
@@ -233,7 +233,7 @@ export function DouyinTaskQueue() {
                           : l.message.includes("✅") || l.message.includes("🎉")
                           ? "text-emerald-400 font-bold"
                           : l.message.includes("❤️") || l.message.includes("💬")
-                          ? "text-rose-300"
+                          ? "text-sky-300"
                           : l.message.includes("▶️")
                           ? "text-cyan-300"
                           : "text-zinc-200"

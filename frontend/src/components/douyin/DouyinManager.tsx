@@ -22,7 +22,7 @@ export function DouyinManager({ profiles, onLaunchProfile }: Props) {
   ] as const;
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#08090c] overflow-hidden">
+    <div className="flex-1 flex flex-col h-full bg-[#07090e] overflow-hidden">
       {/* Sub Header & Responsive Navigation Dock */}
       <div className="bg-surface-1/70 backdrop-blur-xl border-b border-white/[0.06] px-4 sm:px-8 py-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-bezel-sm">
         {/* Title & Micro Metrics */}
@@ -32,8 +32,8 @@ export function DouyinManager({ profiles, onLaunchProfile }: Props) {
               <h1 className="text-sm sm:text-base font-extrabold text-white tracking-tight">
                 Douyin Automation Suite
               </h1>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                <Activity className="w-3 h-3 animate-spin" /> v2.4 Native
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                <Activity className="w-3 h-3 animate-spin text-sky-400" /> v2.4 Native
               </span>
             </div>
             <p className="text-[11px] text-zinc-400 font-medium hidden xs:block">
@@ -53,7 +53,7 @@ export function DouyinManager({ profiles, onLaunchProfile }: Props) {
                 onClick={() => setActiveNav(item.id)}
                 className={`flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all duration-200 ${
                   isActive
-                    ? "bg-gradient-to-r from-rose-600 to-rose-500 text-white shadow-glow-rose border border-white/20 scale-[1.01]"
+                    ? "bg-gradient-to-r from-sky-600 to-cyan-500 text-white shadow-glow-sky border border-white/20 scale-[1.01]"
                     : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04]"
                 }`}
               >
@@ -75,7 +75,7 @@ export function DouyinManager({ profiles, onLaunchProfile }: Props) {
       </div>
 
       {/* Main Responsive Viewport */}
-      <div className="flex-1 overflow-y-auto overscroll-contain bg-gradient-to-b from-[#08090c] via-[#0b0d13] to-[#08090c]">
+      <div className="flex-1 overflow-y-auto overscroll-contain bg-gradient-to-b from-[#07090e] via-[#0b1018] to-[#07090e]">
         {activeNav === "workflows" && (
           <DouyinWorkflowStudio
             profiles={profiles}

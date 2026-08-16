@@ -157,19 +157,19 @@ function AppContent({ authRequired, onLogout }: AppContentProps) {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-[#08090c] text-zinc-100 selection:bg-rose-500/20 selection:text-rose-300">
+    <div className="h-screen flex flex-col bg-[#07090e] text-zinc-100 selection:bg-sky-500/20 selection:text-sky-300">
       {/* High-End Responsive Studio Header */}
       <header className="h-14 bg-surface-1/90 backdrop-blur-xl border-b border-white/[0.08] px-3 sm:px-6 flex items-center justify-between flex-shrink-0 z-30 shadow-bezel-sm">
         <div className="flex items-center gap-2 sm:gap-6 min-w-0">
           {/* Logo & Brand Status */}
           <div className="flex items-center gap-2.5 flex-shrink-0">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-500 via-rose-600 to-pink-700 flex items-center justify-center font-bold text-xs text-white shadow-glow-rose border border-white/20">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-500 via-sky-600 to-cyan-600 flex items-center justify-center font-bold text-xs text-white shadow-glow-sky border border-white/20">
               <Flame className="w-4 h-4 text-white animate-pulse" />
             </div>
             <div className="hidden md:block">
               <div className="text-xs font-extrabold tracking-wider text-white uppercase flex items-center gap-1.5">
                 CLOAK MATRIX
-                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">PRO</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-sky-500/20 text-sky-400 border border-sky-500/30">PRO</span>
               </div>
               <p className="text-[10px] text-zinc-400 font-mono">DOUYIN MULTI-BOT</p>
             </div>
@@ -181,11 +181,11 @@ function AppContent({ authRequired, onLogout }: AppContentProps) {
               onClick={() => setAppMode("douyin")}
               className={`flex items-center gap-1.5 px-2.5 sm:px-4 py-1.5 text-xs font-bold rounded-lg transition-all duration-300 ${
                 appMode === "douyin"
-                  ? "bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-glow-rose border border-white/20 scale-[1.02]"
+                  ? "bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-glow-sky border border-white/20 scale-[1.02]"
                   : "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
               }`}
             >
-              <Flame className="w-3.5 h-3.5" />
+              <Flame className="w-3.5 h-3.5 text-sky-300" />
               <span>Douyin Auto</span>
             </button>
             <button
@@ -215,7 +215,7 @@ function AppContent({ authRequired, onLogout }: AppContentProps) {
           {authRequired && (
             <button
               onClick={onLogout}
-              className="p-2 rounded-xl text-zinc-400 hover:text-rose-400 hover:bg-surface-2 border border-transparent hover:border-white/10 transition"
+              className="p-2 rounded-xl text-zinc-400 hover:text-sky-400 hover:bg-surface-2 border border-transparent hover:border-white/10 transition"
               title="Đăng xuất"
             >
               <Lock className="h-4 w-4" />

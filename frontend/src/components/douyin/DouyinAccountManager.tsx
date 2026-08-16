@@ -132,7 +132,7 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
             <h2 className="text-base sm:text-lg font-extrabold text-white tracking-wide">
               Quản Lý Tài Khoản Douyin & Proxy Hub
             </h2>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/15 text-rose-400 border border-rose-500/20">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-sky-500/15 text-sky-400 border border-sky-500/20">
               {accounts.length} Accounts
             </span>
           </div>
@@ -150,7 +150,7 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm kiếm..."
-              className="w-full h-9 bg-surface-2/80 border border-white/[0.08] rounded-xl pl-9 pr-3 text-xs text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-rose-500/50"
+              className="w-full h-9 bg-surface-2/80 border border-white/[0.08] rounded-xl pl-9 pr-3 text-xs text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-sky-500/50"
             />
           </div>
 
@@ -181,12 +181,12 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
             className="p-2.5 rounded-xl bg-surface-2 text-zinc-400 hover:text-zinc-200 border border-white/[0.08] hover:border-white/[0.15] transition"
             title="Làm mới"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-rose-400" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-sky-400" : ""}`} />
           </button>
 
           <button
             onClick={() => setShowBatchProxyModal(true)}
-            className="btn-tactile-dark py-2 px-3 text-xs flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300"
+            className="btn-tactile-dark py-2 px-3 text-xs flex items-center gap-1.5 text-sky-400 hover:text-sky-300"
           >
             <Globe className="w-3.5 h-3.5" /> Cấu Hình Proxy Hàng Loạt
           </button>
@@ -200,7 +200,7 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
 
           <button
             onClick={() => setShowAddModal(true)}
-            className="btn-tactile-rose flex items-center gap-1.5 text-xs py-2 px-3.5"
+            className="btn-tactile-sky flex items-center gap-1.5 text-xs py-2 px-3.5"
           >
             <Plus className="w-3.5 h-3.5" /> Thêm Tài Khoản
           </button>
@@ -230,13 +230,13 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
                       </div>
                       <span
                         className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-surface-1 ${
-                          acc.cookie_status === "valid" ? "bg-emerald-500 shadow-glow-rose" : "bg-zinc-600"
+                          acc.cookie_status === "valid" ? "bg-emerald-500 shadow-glow-sky" : "bg-zinc-600"
                         }`}
                       ></span>
                     </div>
 
                     <div>
-                      <h4 className="font-extrabold text-white text-sm tracking-tight group-hover:text-rose-400 transition">
+                      <h4 className="font-extrabold text-white text-sm tracking-tight group-hover:text-sky-400 transition">
                         {acc.nickname || "Douyin User"}
                       </h4>
                       <div className="text-[11px] font-mono text-zinc-400">
@@ -247,7 +247,7 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
 
                   <button
                     onClick={() => handleDelete(acc.id)}
-                    className="p-1.5 text-zinc-400 hover:text-rose-400 rounded-lg hover:bg-rose-500/10 transition"
+                    className="p-1.5 text-zinc-400 hover:text-sky-400 rounded-lg hover:bg-sky-500/10 transition"
                     title="Xóa liên kết"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -265,7 +265,7 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
 
                   <div className="flex items-center justify-between">
                     <span className="text-zinc-400 text-[11px] flex items-center gap-1.5">
-                      <Globe className="w-3 h-3 text-rose-400" /> Proxy:
+                      <Globe className="w-3 h-3 text-sky-400" /> Proxy:
                     </span>
                     <span className="font-mono text-[11px] text-zinc-300">
                       {acc.proxy_url ? acc.proxy_url.split("@").pop() : "Direct IP (Không Proxy)"}
@@ -312,7 +312,7 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
                     </button>
                     <button
                       onClick={() => onLaunchProfile(acc.profile_id)}
-                      className="btn-tactile-dark py-2 text-[11px] text-rose-400 hover:text-rose-300"
+                      className="btn-tactile-dark py-2 text-[11px] text-sky-400 hover:text-sky-300"
                     >
                       Mở Trình Duyệt
                     </button>
@@ -321,7 +321,7 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
                   <button
                     onClick={() => handleStartLoginAssistant(acc)}
                     disabled={loggingInId === acc.id}
-                    className="btn-tactile-rose w-full py-2 text-xs flex items-center justify-center gap-1.5"
+                    className="btn-tactile-sky w-full py-2 text-xs flex items-center justify-center gap-1.5"
                   >
                     <QrCode className={`w-3.5 h-3.5 ${loggingInId === acc.id ? "animate-spin" : ""}`} />
                     {loggingInId === acc.id ? "Đang chờ quét mã..." : "Quét Mã Đăng Nhập Douyin"}
@@ -380,19 +380,19 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
                       <button
                         onClick={() => handleStartLoginAssistant(acc)}
                         disabled={loggingInId === acc.id}
-                        className="px-2.5 py-1 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg border border-rose-500/30 transition"
+                        className="px-2.5 py-1 text-xs text-sky-400 hover:bg-sky-500/10 rounded-lg border border-sky-500/30 transition"
                       >
                         Đăng Nhập QR
                       </button>
                       <button
                         onClick={() => onLaunchProfile(acc.profile_id)}
-                        className="px-3 py-1 text-xs bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-bold transition"
+                        className="px-3 py-1 text-xs bg-sky-600 hover:bg-sky-500 text-white rounded-lg font-bold transition"
                       >
                         Mở Trình Duyệt
                       </button>
                       <button
                         onClick={() => handleDelete(acc.id)}
-                        className="p-1 text-zinc-400 hover:text-rose-400 transition"
+                        className="p-1 text-zinc-400 hover:text-sky-400 transition"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -411,7 +411,7 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
           <div className="bezel-card p-6 w-full max-w-md space-y-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
               <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
-                <Plus className="w-4 h-4 text-rose-500" /> Gán Tài Khoản Douyin Vào Profile
+                <Plus className="w-4 h-4 text-sky-500" /> Gán Tài Khoản Douyin Vào Profile
               </h3>
               <button
                 onClick={() => setShowAddModal(false)}
@@ -469,7 +469,7 @@ export function DouyinAccountManager({ profiles, onLaunchProfile }: Props) {
                 >
                   Hủy
                 </button>
-                <button type="submit" className="btn-tactile-rose py-2 px-5 text-xs">
+                <button type="submit" className="btn-tactile-sky py-2 px-5 text-xs">
                   Lưu Tài Khoản
                 </button>
               </div>

@@ -92,7 +92,7 @@ export function BatchProxyModal({ profiles, onClose, onSuccess }: Props) {
         {/* Modal Header */}
         <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+            <div className="p-2 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20">
               <Globe className="w-5 h-5" />
             </div>
             <div>
@@ -114,7 +114,7 @@ export function BatchProxyModal({ profiles, onClose, onSuccess }: Props) {
             onClick={() => setMode("create")}
             className={`py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 ${
               mode === "create"
-                ? "bg-rose-600 text-white shadow-glow-rose"
+                ? "bg-sky-600 text-white shadow-glow-sky"
                 : "text-zinc-400 hover:text-white"
             }`}
           >
@@ -125,7 +125,7 @@ export function BatchProxyModal({ profiles, onClose, onSuccess }: Props) {
             onClick={() => setMode("assign")}
             className={`py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 ${
               mode === "assign"
-                ? "bg-rose-600 text-white shadow-glow-rose"
+                ? "bg-sky-600 text-white shadow-glow-sky"
                 : "text-zinc-400 hover:text-white"
             }`}
           >
@@ -149,7 +149,7 @@ export function BatchProxyModal({ profiles, onClose, onSuccess }: Props) {
               value={proxyText}
               onChange={(e) => setProxyText(e.target.value)}
               placeholder="103.14.22.1:1080:username:password&#10;socks5://user:pass@103.14.22.2:1080&#10;http://103.14.22.3:8080"
-              className="w-full bg-surface-2 border border-white/[0.08] rounded-xl p-3 font-mono text-xs text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-rose-500/50"
+              className="w-full bg-surface-2 border border-white/[0.08] rounded-xl p-3 font-mono text-xs text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-sky-500/50"
             />
             <div className="flex items-center justify-between text-[11px] text-zinc-400 font-mono">
               <span>Hỗ trợ: HTTP, HTTPS, SOCKS5 (ip:port:user:pass)</span>
@@ -230,7 +230,7 @@ export function BatchProxyModal({ profiles, onClose, onSuccess }: Props) {
                       selectedProfileIds.length === profiles.length ? [] : profiles.map((p) => p.id)
                     )
                   }
-                  className="text-[11px] text-rose-400 font-mono"
+                  className="text-[11px] text-sky-400 font-mono"
                 >
                   {selectedProfileIds.length === profiles.length ? "Bỏ chọn" : "Chọn tất cả"}
                 </button>
@@ -248,7 +248,7 @@ export function BatchProxyModal({ profiles, onClose, onSuccess }: Props) {
                       }
                       className={`p-2 rounded-xl border text-xs cursor-pointer truncate transition ${
                         isSel
-                          ? "bg-rose-950/40 border-rose-500/50 text-white font-bold"
+                          ? "bg-sky-950/40 border-sky-500/50 text-white font-bold"
                           : "bg-surface-2 border-white/[0.05] text-zinc-400"
                       }`}
                     >
@@ -267,7 +267,7 @@ export function BatchProxyModal({ profiles, onClose, onSuccess }: Props) {
               id="autoGeoip"
               checked={autoGeoip}
               onChange={(e) => setAutoGeoip(e.target.checked)}
-              className="rounded accent-rose-500 w-4 h-4"
+              className="rounded accent-sky-500 w-4 h-4"
             />
             <label htmlFor="autoGeoip" className="text-xs text-zinc-300 font-medium cursor-pointer">
               🌍 Tự động khớp Múi giờ, Ngôn ngữ và Vị trí theo IP của Proxy (GeoIP Emulation)
@@ -282,7 +282,7 @@ export function BatchProxyModal({ profiles, onClose, onSuccess }: Props) {
             <button
               type="submit"
               disabled={submitting || getProxyLines().length === 0}
-              className="btn-tactile-rose py-2.5 px-6 flex items-center gap-2"
+              className="btn-tactile-sky py-2.5 px-6 flex items-center gap-2"
             >
               {submitting ? "Đang xử lý..." : "Xác Nhận Áp Dụng Proxy"}
               <ArrowRight className="w-4 h-4" />

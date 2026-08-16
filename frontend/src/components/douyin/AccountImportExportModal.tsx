@@ -106,7 +106,7 @@ export function AccountImportExportModal({ accounts, onClose, onSuccess }: Props
             type="button"
             onClick={() => setTab("import_txt")}
             className={`py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 ${
-              tab === "import_txt" ? "bg-rose-600 text-white shadow-glow-rose" : "text-zinc-400 hover:text-white"
+              tab === "import_txt" ? "bg-sky-600 text-white shadow-glow-sky" : "text-zinc-400 hover:text-white"
             }`}
           >
             <Upload className="w-3.5 h-3.5" /> Nhập Danh Sách Tài Khoản
@@ -115,7 +115,7 @@ export function AccountImportExportModal({ accounts, onClose, onSuccess }: Props
             type="button"
             onClick={() => setTab("cookie_vault")}
             className={`py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 ${
-              tab === "cookie_vault" ? "bg-rose-600 text-white shadow-glow-rose" : "text-zinc-400 hover:text-white"
+              tab === "cookie_vault" ? "bg-sky-600 text-white shadow-glow-sky" : "text-zinc-400 hover:text-white"
             }`}
           >
             <Cookie className="w-3.5 h-3.5" /> Cookie JSON Vault
@@ -126,14 +126,14 @@ export function AccountImportExportModal({ accounts, onClose, onSuccess }: Props
           <form onSubmit={handleImportTxt} className="space-y-4 text-xs">
             <div className="space-y-2">
               <label className="label">
-                Dán danh sách tài khoản (Định dạng: <span className="text-rose-400">Tên|DouyinID|ProxyURL</span>):
+                Dán danh sách tài khoản (Định dạng: <span className="text-sky-400">Tên|DouyinID|ProxyURL</span>):
               </label>
               <textarea
                 rows={6}
                 value={rawText}
                 onChange={(e) => setRawText(e.target.value)}
                 placeholder="Kênh Thời Trang 01|12345678|http://user:pass@1.2.3.4:8080&#10;Kênh Làm Đẹp 02|87654321|socks5://user:pass@5.6.7.8:1080"
-                className="w-full bg-surface-2 border border-white/[0.08] rounded-xl p-3 font-mono text-xs text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-rose-500/50"
+                className="w-full bg-surface-2 border border-white/[0.08] rounded-xl p-3 font-mono text-xs text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-sky-500/50"
               />
               <p className="text-[11px] text-zinc-400">
                 Mỗi dòng sẽ tự động tạo một Antidetect Profile mới và gắn tương ứng với tài khoản Douyin.
@@ -148,7 +148,7 @@ export function AccountImportExportModal({ accounts, onClose, onSuccess }: Props
               >
                 <Download className="w-3.5 h-3.5" /> Xuất Tất Cả (.JSON)
               </button>
-              <button type="submit" disabled={loading || !rawText.trim()} className="btn-tactile-rose py-2 px-6">
+              <button type="submit" disabled={loading || !rawText.trim()} className="btn-tactile-sky py-2 px-6">
                 {loading ? "Đang nhập..." : "Bắt Đầu Nhập Hàng Loạt"}
               </button>
             </div>
@@ -183,7 +183,7 @@ export function AccountImportExportModal({ accounts, onClose, onSuccess }: Props
                       setCopied(true);
                       setTimeout(() => setCopied(false), 2000);
                     }}
-                    className="text-[11px] text-rose-400 font-mono flex items-center gap-1"
+                    className="text-[11px] text-sky-400 font-mono flex items-center gap-1"
                   >
                     {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                     {copied ? "Đã chép!" : "Sao chép JSON"}
@@ -195,7 +195,7 @@ export function AccountImportExportModal({ accounts, onClose, onSuccess }: Props
                 value={cookieJson}
                 onChange={(e) => setCookieJson(e.target.value)}
                 placeholder='[{"name": "sessionid", "value": "...", "domain": ".douyin.com", "path": "/"}]'
-                className="w-full bg-surface-2 border border-white/[0.08] rounded-xl p-3 font-mono text-[11px] text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-rose-500/50"
+                className="w-full bg-surface-2 border border-white/[0.08] rounded-xl p-3 font-mono text-[11px] text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-sky-500/50"
               />
             </div>
 
@@ -212,7 +212,7 @@ export function AccountImportExportModal({ accounts, onClose, onSuccess }: Props
                 type="button"
                 onClick={handleImportCookies}
                 disabled={loading || !cookieJson.trim() || !selectedAccountId}
-                className="btn-tactile-rose py-2 px-6 flex items-center gap-1.5"
+                className="btn-tactile-sky py-2 px-6 flex items-center gap-1.5"
               >
                 <Upload className="w-3.5 h-3.5" /> Nạp Cookie Vào Phiên
               </button>

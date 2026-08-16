@@ -47,7 +47,7 @@ export function DouyinAICommenter() {
       {/* Header */}
       <div className="bezel-card p-6 space-y-2">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          <div className="p-2 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20">
             <Wand2 className="w-5 h-5" />
           </div>
           <div>
@@ -103,7 +103,7 @@ export function DouyinAICommenter() {
                 name="lang"
                 checked={language === "zh"}
                 onChange={() => setLanguage("zh")}
-                className="accent-rose-500 w-4 h-4"
+                className="accent-sky-500 w-4 h-4"
               />
               🇨🇳 Tiếng Trung Giản Thể (Douyin Native)
             </label>
@@ -113,7 +113,7 @@ export function DouyinAICommenter() {
                 name="lang"
                 checked={language === "vi"}
                 onChange={() => setLanguage("vi")}
-                className="accent-rose-500 w-4 h-4"
+                className="accent-sky-500 w-4 h-4"
               />
               🇻🇳 Tiếng Việt
             </label>
@@ -123,16 +123,16 @@ export function DouyinAICommenter() {
         <button
           onClick={handleGenerate}
           disabled={loading || !videoTitle}
-          className="btn-tactile-rose w-full py-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-2"
+          className="btn-tactile-sky w-full py-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-2"
         >
           <Sparkles className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} /> SINH BÌNH LUẬN NGAY
         </button>
 
         {/* Result Area */}
         {generatedComment && (
-          <div className="bezel-card-inner p-5 space-y-3 pt-4 border-rose-500/30">
+          <div className="bezel-card-inner p-5 space-y-3 pt-4 border-sky-500/30">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-extrabold text-rose-400 flex items-center gap-1.5 font-mono">
+              <span className="text-xs font-extrabold text-sky-400 flex items-center gap-1.5 font-mono">
                 <MessageSquare className="w-4 h-4" /> KẾT QUẢ SINH TỰ ĐỘNG:
               </span>
               <button

@@ -130,7 +130,7 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
               onClick={() => setActiveTab(tab.id as any)}
               className={`p-3 sm:p-4 rounded-xl text-left transition-all duration-300 relative group overflow-hidden ${
                 isActive
-                  ? "bg-gradient-to-br from-rose-600/90 to-rose-700 text-white shadow-glow-rose border border-white/25 scale-[1.01]"
+                  ? "bg-gradient-to-br from-sky-600/90 to-cyan-700 text-white shadow-glow-sky border border-white/25 scale-[1.01]"
                   : "bg-surface-2/40 text-zinc-400 border border-transparent hover:bg-surface-2 hover:text-zinc-200 hover:border-white/[0.06]"
               }`}
             >
@@ -144,7 +144,7 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
                 </div>
                 <div className="font-extrabold text-xs tracking-wide">{tab.label}</div>
               </div>
-              <div className={`text-[11px] ${isActive ? "text-rose-100" : "text-zinc-400"}`}>
+              <div className={`text-[11px] ${isActive ? "text-sky-100" : "text-zinc-400"}`}>
                 {tab.desc}
               </div>
             </button>
@@ -158,7 +158,7 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
           <div className="bezel-card p-6 space-y-5">
             <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                <div className="p-2 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20">
                   <Sliders className="w-4 h-4" />
                 </div>
                 <div>
@@ -185,7 +185,7 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
                   <div className="bezel-card-inner p-4 space-y-2">
                     <div className="flex items-center justify-between">
                       <label className="label mb-0">Số video muốn xem</label>
-                      <span className="text-xs font-mono font-bold text-rose-400 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20">
+                      <span className="text-xs font-mono font-bold text-sky-400 px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/20">
                         {videoCount} clips
                       </span>
                     </div>
@@ -195,7 +195,7 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
                       max={50}
                       value={videoCount}
                       onChange={(e) => setVideoCount(Number(e.target.value))}
-                      className="w-full accent-rose-500 cursor-pointer"
+                      className="w-full accent-sky-500 cursor-pointer"
                     />
                   </div>
 
@@ -229,7 +229,7 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
                   <div className="bezel-card-inner p-4 space-y-2">
                     <div className="flex items-center justify-between">
                       <label className="label mb-0">Tỷ lệ Thả Tim (Like)</label>
-                      <span className="text-xs font-mono font-bold text-rose-400">{likeProb}%</span>
+                      <span className="text-xs font-mono font-bold text-sky-400">{likeProb}%</span>
                     </div>
                     <input
                       type="range"
@@ -237,14 +237,14 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
                       max={100}
                       value={likeProb}
                       onChange={(e) => setLikeProb(Number(e.target.value))}
-                      className="w-full accent-rose-500 cursor-pointer"
+                      className="w-full accent-sky-500 cursor-pointer"
                     />
                   </div>
 
                   <div className="bezel-card-inner p-4 space-y-2">
                     <div className="flex items-center justify-between">
                       <label className="label mb-0">Tỷ lệ Bình Luận</label>
-                      <span className="text-xs font-mono font-bold text-amber-400">{commentProb}%</span>
+                      <span className="text-xs font-mono font-bold text-cyan-400">{commentProb}%</span>
                     </div>
                     <input
                       type="range"
@@ -252,7 +252,7 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
                       max={100}
                       value={commentProb}
                       onChange={(e) => setCommentProb(Number(e.target.value))}
-                      className="w-full accent-amber-500 cursor-pointer"
+                      className="w-full accent-cyan-500 cursor-pointer"
                     />
                   </div>
                 </div>
@@ -262,12 +262,12 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
                   onClick={() => setEnableAI(!enableAI)}
                   className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 flex items-center justify-between ${
                     enableAI
-                      ? "bg-rose-950/20 border-rose-500/40 shadow-glow-rose"
+                      ? "bg-sky-950/20 border-sky-500/40 shadow-glow-sky"
                       : "bg-surface-2/40 border-white/[0.06] opacity-70"
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    <div className="p-2 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20">
                       <Sparkles className="w-4 h-4" />
                     </div>
                     <div>
@@ -279,7 +279,7 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
                   </div>
                   <div
                     className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 flex items-center ${
-                      enableAI ? "bg-rose-600 justify-end" : "bg-surface-4 justify-start"
+                      enableAI ? "bg-sky-500 justify-end" : "bg-surface-4 justify-start"
                     }`}
                   >
                     <div className="w-4 h-4 rounded-full bg-white shadow-md"></div>
@@ -319,7 +319,7 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
                       max={100}
                       value={likeProb}
                       onChange={(e) => setLikeProb(Number(e.target.value))}
-                      className="w-full accent-rose-500 cursor-pointer mt-2"
+                      className="w-full accent-sky-500 cursor-pointer mt-2"
                     />
                   </div>
                 </div>
@@ -406,14 +406,14 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
                 <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-rose-400" />
+                  <Shield className="w-4 h-4 text-sky-400" />
                   <h3 className="text-sm font-extrabold text-white tracking-wide">
                     Chọn Profile Thực Thi
                   </h3>
                 </div>
                 <button
                   onClick={selectAllProfiles}
-                  className="text-[11px] font-bold text-rose-400 hover:text-rose-300 font-mono tracking-wider transition"
+                  className="text-[11px] font-bold text-sky-400 hover:text-sky-300 font-mono tracking-wider transition"
                 >
                   {selectedProfileIds.length === profiles.length ? "UNSELECT ALL" : "SELECT ALL"}
                 </button>
@@ -433,7 +433,7 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
                         onClick={() => toggleSelectProfile(p.id)}
                         className={`p-3.5 rounded-xl border text-xs cursor-pointer flex items-center justify-between transition-all duration-200 ${
                           isSelected
-                            ? "bg-rose-950/40 border-rose-500/50 text-white shadow-glow-rose"
+                            ? "bg-sky-950/40 border-sky-500/50 text-white shadow-glow-sky"
                             : "bg-surface-2/50 border-white/[0.05] text-zinc-400 hover:border-white/[0.12] hover:text-zinc-200"
                         }`}
                       >
@@ -441,7 +441,7 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
                           <div
                             className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-all ${
                               isSelected
-                                ? "bg-rose-600 border-rose-500 text-white shadow-sm"
+                                ? "bg-sky-600 border-sky-400 text-white shadow-sm"
                                 : "border-white/10 bg-surface-3"
                             }`}
                           >
@@ -475,7 +475,7 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
             <div className="pt-4 border-t border-white/[0.08] space-y-3">
               <div className="flex justify-between items-center text-xs font-mono">
                 <span className="text-zinc-400">TARGET ACCOUNTS:</span>
-                <span className="text-rose-400 font-extrabold text-sm">{selectedProfileIds.length} ACTIVE</span>
+                <span className="text-sky-400 font-extrabold text-sm">{selectedProfileIds.length} ACTIVE</span>
               </div>
 
               <button
@@ -484,17 +484,17 @@ export function DouyinWorkflowStudio({ profiles, onTasksDispatched }: Props) {
                 className={`w-full group rounded-2xl p-1 transition-all duration-300 ${
                   running || selectedProfileIds.length === 0
                     ? "bg-zinc-800 opacity-50 cursor-not-allowed"
-                    : "bg-gradient-to-r from-rose-500 via-pink-600 to-rose-600 shadow-glow-rose hover:scale-[1.01] active:scale-[0.99]"
+                    : "bg-gradient-to-r from-sky-500 via-cyan-500 to-sky-600 shadow-glow-sky hover:scale-[1.01] active:scale-[0.99]"
                 }`}
               >
-                <div className="w-full bg-[#0d0e14]/90 group-hover:bg-transparent rounded-[calc(1rem-2px)] py-3.5 px-5 flex items-center justify-between transition-all duration-300">
+                <div className="w-full bg-[#0b1018]/90 group-hover:bg-transparent rounded-[calc(1rem-2px)] py-3.5 px-5 flex items-center justify-between transition-all duration-300">
                   <div className="flex items-center gap-2.5">
-                    <Zap className="w-4 h-4 text-rose-400 group-hover:text-white" />
+                    <Zap className="w-4 h-4 text-sky-400 group-hover:text-white" />
                     <span className="text-xs sm:text-sm font-extrabold text-white tracking-wider">
                       BẮT ĐẦU CHẠY MA TRẬN
                     </span>
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-rose-500/20 group-hover:bg-white/20 flex items-center justify-center text-rose-400 group-hover:text-white transition-transform group-hover:translate-x-1">
+                  <div className="w-8 h-8 rounded-full bg-sky-500/20 group-hover:bg-white/20 flex items-center justify-center text-sky-400 group-hover:text-white transition-transform group-hover:translate-x-1">
                     <ArrowRight className="w-4 h-4" />
                   </div>
                 </div>
