@@ -72,16 +72,31 @@ jobs:
           path: dist/CloakBrowser-Manager-x64.exe
           retention-days: 14
 
-      # Step 6: Create GitHub Release (when pushing tag v*)
-      - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+      # Step 6: Create or Update GitHub Release
+      - name: Create or Update GitHub Release
+        if: github.event_name != 'pull_request'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'v2.4.0' }}
+          name: "CloakBrowser Manager & Douyin Automation Suite v2.4.0 (Windows x64)"
+          body: |
+            ## 🚀 CloakBrowser Manager & Douyin Automation Suite (Windows x64)
+
+            ### ✨ Các tính năng nổi bật:
+            - **Ma Trận Nuôi Nick Douyin**: Nuôi nick tự động (Warmup), tìm kiếm theo từ khóa (Search), dạo Livestream & tự động đăng video (Uploader).
+            - **Thời Gian Tương Tác Tự Nhiên ($s \to s$)**: Thời gian xem video và khoảng chờ tương tác ngẫu nhiên chống phát hiện bot.
+            - **Lịch Trình Hẹn Giờ 24/7 (Cron Engine)**: Tự động chạy theo khung giờ vàng (`08:30, 12:15, 18:30, 21:00`) hoặc lặp lại định kỳ mỗi $N$ giờ/phút.
+            - **Google Gemini AI Commenter**: Tích hợp model `ag/ag-gemini-3.6-flash` từ `https://vps.mun-ai.art/v1` sinh bình luận tiếng Trung tự nhiên, chuẩn văn phong Douyin.
+            - **Quản Lý Proxy & Profile Hàng Loạt**: Import danh sách proxy, kiểm tra độ trễ (latency/GeoIP) và tự động gán vào Profile.
+
+            ### 📦 Hướng dẫn cài đặt & sử dụng:
+            1. Tải file `CloakBrowser-Manager-x64.exe` hoặc giải nén file `CloakBrowser-Manager-Windows-x64.zip`.
+            2. Chạy trực tiếp `CloakBrowser-Manager-x64.exe` (không cần cài đặt Python hoặc Node.js).
+            3. Trình duyệt sẽ tự động mở trang Dashboard quản lý tại `http://127.0.0.1:8080`.
           files: |
             dist/CloakBrowser-Manager-x64.exe
             CloakBrowser-Manager-Windows-x64.zip
           draft: false
           prerelease: false
-          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

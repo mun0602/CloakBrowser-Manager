@@ -1,23 +1,14 @@
-"""Automated tests for Douyin Automation features and API endpoints."""
-
 import pytest
-from starlette.testclient import TestClient
-from backend.main import app
 from backend import database as db
 
 
-@pytest.fixture
-def client():
-    return TestClient(app)
-
-
-def test_douyin_accounts_crud(client):
+def test_douyin_accounts_crud(app_client):
     # Create profile
     p = db.create_profile(name="Douyin Test Profile")
     p_id = p["id"]
 
     # 1. Create account
-    res = client.post(
+    res = app_client.post(
         "/api/douyin/accounts",
         json={
             "profile_id": p_id,
@@ -33,13 +24,13 @@ def test_douyin_accounts_crud(client):
     acc_id = acc["id"]
 
     # 2. List accounts
-    res = client.get("/api/douyin/accounts")
+    res = app_client.get("/api/douyin/accounts")
     assert res.status_code == 200
     accounts = res.json()
     assert any(a["id"] == acc_id for a in accounts)
 
     # 3. Update account
-    res = client.put(
+    res = app_client.put(
         f"/api/douyin/accounts/{acc_id}",
         json={"nickname": "UpdatedUser99", "cookie_status": "valid"},
     )
@@ -49,16 +40,16 @@ def test_douyin_accounts_crud(client):
     assert updated["cookie_status"] == "valid"
 
     # 4. Delete account
-    res = client.delete(f"/api/douyin/accounts/{acc_id}")
+    res = app_client.delete(f"/api/douyin/accounts/{acc_id}")
     assert res.status_code == 200
 
     # Cleanup profile
     db.delete_profile(p_id)
 
 
-def test_douyin_workflows_crud(client):
+def test_douyin_workflows_crud(app_client):
     # 1. Create workflow
-    res = client.post(
+    res = app_client.post(
         "/api/douyin/workflows",
         json={
             "name": "Auto Warmup Workflow",
@@ -72,23 +63,23 @@ def test_douyin_workflows_crud(client):
     wf_id = wf["id"]
 
     # 2. List workflows
-    res = client.get("/api/douyin/workflows")
+    res = app_client.get("/api/douyin/workflows")
     assert res.status_code == 200
     wfs = res.json()
     assert any(w["id"] == wf_id for w in wfs)
 
     # 3. Delete workflow
-    res = client.delete(f"/api/douyin/workflows/{wf_id}")
+    res = app_client.delete(f"/api/douyin/workflows/{wf_id}")
     assert res.status_code == 200
 
 
-def test_douyin_schedules_crud_and_calculation(client):
+def test_douyin_schedules_crud_and_calculation(app_client):
     # Create profile
     p = db.create_profile(name="Schedule Test Profile")
     p_id = p["id"]
 
     # 1. Create schedule
-    res = client.post(
+    res = app_client.post(
         "/api/douyin/schedules",
         json={
             "name": "Daily Golden Hour",
@@ -107,28 +98,28 @@ def test_douyin_schedules_crud_and_calculation(client):
     sch_id = sch["id"]
 
     # 2. List schedules
-    res = client.get("/api/douyin/schedules")
+    res = app_client.get("/api/douyin/schedules")
     assert res.status_code == 200
     schedules = res.json()
     assert any(s["id"] == sch_id for s in schedules)
 
     # 3. Toggle schedule
-    res = client.post(f"/api/douyin/schedules/{sch_id}/toggle")
+    res = app_client.post(f"/api/douyin/schedules/{sch_id}/toggle")
     assert res.status_code == 200
     toggled = res.json()
     assert toggled["is_active"] is False
 
     # 4. Delete schedule
-    res = client.delete(f"/api/douyin/schedules/{sch_id}")
+    res = app_client.delete(f"/api/douyin/schedules/{sch_id}")
     assert res.status_code == 200
 
     # Cleanup profile
     db.delete_profile(p_id)
 
 
-def test_douyin_batch_proxy_features(client):
+def test_douyin_batch_proxy_features(app_client):
     # 1. Check proxy latency
-    res = client.post(
+    res = app_client.post(
         "/api/proxy/check-batch",
         json={"proxies": ["http://user:pass@127.0.0.1:8080", "127.0.0.1:1080"]},
     )
@@ -139,7 +130,7 @@ def test_douyin_batch_proxy_features(client):
     assert "proxy" in results[0]
 
     # 2. Batch create profiles with proxy
-    res = client.post(
+    res = app_client.post(
         "/api/profiles/batch-create-with-proxies",
         json={
             "proxies": ["http://proxy1.test:8080", "http://proxy2.test:8080"],
